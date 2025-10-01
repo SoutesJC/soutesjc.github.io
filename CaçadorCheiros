@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Caçador de Cheiros — Mini-app</title>
+<style>
+  :root{--bg:#0b1220;--panel:#0f1724;--muted:#9aa6b2;--accent:#60a5fa;--ok:#34d399;--warn:#f59e0b;--err:#fb7185;--card:#071428;--text:#e6eef8}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(#061021,#071428);color:var(--text);padding:18px}
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:16px;max-width:1200px;margin:0 auto}
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.04);padding:14px;border-radius:10px}
+  h1{font-size:18px;margin:0 0 8px}
+  label{font-size:13px;color:var(--muted);display:block;margin-top:8px}
+  textarea,input,select{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
+  .row{display:flex;gap:8px;align-items:center}
+  button{background:var(--accent);border:0;padding:8px 10px;border-radius:8px;color:#02233a;font-weight:600;cursor:pointer}
+  .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
+  .btn-danger{background:var(--err);color:#2b0210}
+  .muted{color:var(--muted);font-size:13px}
+  #canvas{width:100%;height:640px;border-radius:8px;background:linear-gradient(180deg,#071428,#031021);display:block}
+  .lint-list{max-height:340px;overflow:auto;margin-top:8px}
+  .lint-item{padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:6px}
+  .severity{display:inline-block;padding:6px 8px;border-radius:999px;font-size:12px}
+  .sev-info{background:rgba(96,165,250,0.12);color:var(--accent)}
+  .sev-warn{background:rgba(245,158,11,0.12);color:var(--warn)}
+  .sev-err{background:rgba(251,113,133,0.12);color:var(--err)}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  pre{background:rgba(0,0,0,0.2);padding:8px;border-radius:8px;overflow:auto}
+  .bottom-row{display:flex;justify-content:space-between;gap:8px;margin-top:10px}
+  .hint{font-size:13px;color:var(--muted);margin-top:6px}
+  .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .small{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+  <div style="max-width:1200px;margin:0 auto">
+    <h1>Caçador de Cheiros — Mini-app</h1>
+    <div class="small">Importe um modelo simples (JSON), execute o lint e aplique refatorações sugeridas.</div>
+  </div>
+
+  <div class="grid" style="margin-top:12px">
+    <!-- LEFT PANEL: Controls & Lint -->
+    <div class="panel">
+      <label>Importar modelo JSON</label>
+      <input id="fileInput" type="file" accept="application/json" />
+      <div class="row" style="margin-top:8px">
+        <button id="btnExample">Exemplo</button>
+        <button id="btnRun" class="btn-ghost">Rodar Lint</button>
+        <button id="btnReset" class="btn-ghost">Reset</button>
+      </div>
+
+      <label>Relatório (Lint)</label>
+      <div id="lintList" class="lint-list"></div>
+
+      <label>Ações sugeridas</label>
+      <div id="actions" class="actions"></div>
+
+      <div class="bottom-row">
+        <div>
+          <button id="btnExportModel" class="btn-ghost">Exportar modelo (JSON)</button>
+          <button id="btnExportReport" class="btn-ghost">Exportar relatório (JSON)</button>
+        </div>
+        <div class="small">Modelo: <span id="modelName">(nenhum)</span></div>
+      </div>
+
+      <div class="hint">Esquema esperado: <code>classes[]</code> e <code>associations[]</code>. Cada associação pode incluir <code>attributes</code> (indicativo de vínculo com dados).</div>
+    </div>
+
+    <!-- RIGHT PANEL: Graph + JSON -->
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="small">Visualização do modelo</div>
+        <div class="row">
+          <button id="btnZoomIn" class="btn-ghost">Zoom +</button>
+          <button id="btnZoomOut" class="btn-ghost">Zoom -</button>
+        </div>
+      </div>
+
+      <svg id="canvas" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet"></svg>
+
+      <label style="margin-top:8px">Modelo JSON (editable)</label>
+      <textarea id="jsonText" rows="8" style="font-family:monospace"></textarea>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div class="muted">Editar JSON e clicar em <strong>Rodar Lint</strong>.</div>
+        <div>
+          <button id="btnApplyJson" class="btn">Aplicar JSON</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+/* Caçador de Cheiros - client-side
+   - Modelo esperado:
+     {
+       "classes": [{"name":"User","attributes":[{"name":"id","type":"int"}], ...],
+       "associations": [{"from":"User","to":"Post","name":"writes","fromMult":"1..*","toMult":"1..1","attributes": [] }]
+     }
+*/
+
+// state
+let model = { classes: [], associations: [] };
+let report = [];
+const canvas = document.getElementById('canvas');
+const lintListEl = document.getElementById('lintList');
+const jsonText = document.getElementById('jsonText');
+const modelNameEl = document.getElementById('modelName');
+const actionsEl = document.getElementById('actions');
+
+const sampleModel = {
+  classes: [
+    { name: "User", attributes: [{name:"id",type:"int"},{name:"email",type:"string"}] },
+    { name: "Post", attributes: [{name:"id",type:"int"},{name:"authorId",type:"int"}] },
+    { name: "Comment", attributes: [{name:"id",type:"int"},{name:"postId",type:"int"},{name:"content",type:"string"}] },
+    { name: "Tag", attributes: [{name:"id",type:"int"},{name:"label",type:"string"}] }
+  ],
+  associations: [
+    { from:"User", to:"Post", name:"writes", fromMult:"1..*", toMult:"1..1", attributes: [] },
+    { from:"Post", to:"User", name:"authorOf", fromMult:"1..1", toMult:"1..*", attributes: [] },
+    { from:"Post", to:"Comment", name:"hasComments", fromMult:"1..*", toMult:"1..1", attributes: [] },
+    { from:"Post", to:"Tag", name:"tagged", fromMult:"0..*", toMult:"0..*", attributes:[{name:"note",type:"string"}] }
+  ]
+};
+
+// utility
+const uid = (p='id') => `${p}_${Math.random().toString(36).slice(2,9)}`;
+const clearEl = (el) => { while(el.firstChild) el.removeChild(el.firstChild); };
+
+// File import
+document.getElementById('fileInput').addEventListener('change', (ev)=>{
+  const f = ev.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      loadModel(parsed, f.name);
+    } catch(err){ alert('JSON inválido'); }
+  };
+  reader.readAsText(f);
+});
+
+// Example
+document.getElementById('btnExample').addEventListener('click', ()=>{
+  loadModel(JSON.parse(JSON.stringify(sampleModel)), 'exemplo.json');
+});
+
+// Apply edited JSON
+document.getElementById('btnApplyJson').addEventListener('click', ()=>{
+  try {
+    const parsed = JSON.parse(jsonText.value);
+    loadModel(parsed, 'editor.json');
+  } catch(e){ alert('JSON inválido'); }
+});
+
+// Reset
+document.getElementById('btnReset').addEventListener('click', ()=> {
+  model = { classes: [], associations: [] };
+  report = [];
+  modelNameEl.textContent='(nenhum)';
+  jsonText.value = '';
+  render();
+  renderReport();
+});
+
+// Run lint
+document.getElementById('btnRun').addEventListener('click', ()=> {
+  try {
+    report = runLint(model);
+    renderReport();
+    renderActions(report);
+  } catch(e){ console.error(e); alert('Erro ao rodar lint. Veja o console.'); }
+});
+
+// Export model / report
+document.getElementById('btnExportModel').addEventListener('click', ()=> {
+  downloadJSON(model, 'model_after.json');
+});
+document.getElementById('btnExportReport').addEventListener('click', ()=> {
+  downloadJSON({ modelName: modelNameEl.textContent, report, exportedAt: new Date().toISOString()}, 'lint_report.json');
+});
+
+// zoom
+let zoom = 1;
+document.getElementById('btnZoomIn').addEventListener('click', ()=> { zoom *= 1.15; render(); });
+document.getElementById('btnZoomOut').addEventListener('click', ()=> { zoom /= 1.15; render(); });
+
+// download helper
+function downloadJSON(obj, filename){
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 5000);
+}
+
+// load model
+function loadModel(parsed, name){
+  // basic normalization checks
+  if(!parsed || !Array.isArray(parsed.classes) || !Array.isArray(parsed.associations)){
+    alert('Formato inválido: verifique "classes" e "associations" arrays.');
+    return;
+  }
+  model = parsed;
+  modelNameEl.textContent = name || 'modelo';
+  jsonText.value = JSON.stringify(model, null, 2);
+  report = [];
+  render();
+  renderReport();
+  actionsEl.innerHTML='';
+}
+
+// render graph (simple force-like layout)
+function render(){
+  // clear svg
+  while(canvas.firstChild) canvas.removeChild(canvas.firstChild);
+  const W = 1000, H = 700;
+  canvas.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const classes = model.classes || [];
+  const associations = model.associations || [];
+
+  // layout: place classes on circle
+  const n = classes.length || 0;
+  const cx = W/2, cy = H/2;
+  const radius = Math.min(W,H)/3;
+  classes.forEach((c,i)=>{
+    const angle = (i / Math.max(1,n)) * Math.PI*2 - Math.PI/2;
+    c._x = cx + Math.cos(angle)*radius* (0.9 + 0.1*Math.sin(i));
+    c._y = cy + Math.sin(angle)*radius* (0.9 + 0.1*Math.cos(i));
+  });
+
+  // draw associations lines behind
+  associations.forEach((a,i)=>{
+    const from = findClass(a.from);
+    const to = findClass(a.to);
+    if(!from || !to) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', from._x);
+    line.setAttribute('y1', from._y);
+    line.setAttribute('x2', to._x);
+    line.setAttribute('y2', to._y);
+    line.setAttribute('stroke', 'rgba(156,163,175,0.6)');
+    line.setAttribute('stroke-width','2');
+    // arrow
+    canvas.appendChild(line);
+    // label mid
+    const mx = (from._x+to._x)/2, my=(from._y+to._y)/2;
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', mx); t.setAttribute('y', my-8); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','12');
+    t.setAttribute('fill','#cbd5e1'); t.textContent = a.name || '';
+    canvas.appendChild(t);
+  });
+
+  // draw nodes
+  classes.forEach((c)=>{
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('transform', `translate(${c._x-80}, ${c._y-28})`);
+    g.style.cursor='pointer';
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('width','160'); rect.setAttribute('height','56'); rect.setAttribute('rx','8');
+    rect.setAttribute('fill','#7c3aed'); rect.setAttribute('opacity','0.95');
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x','80'); t.setAttribute('y','34'); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','14');
+    t.setAttribute('fill','#031428'); t.textContent = c.name;
+    g.appendChild(rect); g.appendChild(t);
+    // show attribute count small
+    const attr = document.createElementNS('http://www.w3.org/2000/svg','text');
+    attr.setAttribute('x','80'); attr.setAttribute('y','14'); attr.setAttribute('text-anchor','middle'); attr.setAttribute('font-size','11');
+    attr.setAttribute('fill','#cbd5e1'); attr.textContent = `${(c.attributes||[]).length} attrs`;
+    g.appendChild(attr);
+    // click: show details
+    g.addEventListener('click', ()=> {
+      alert(`Classe: ${c.name}\nAtributos:\n${(c.attributes||[]).map(a=>'- '+a.name+':'+a.type).join('\n')}`);
+    });
+    canvas.appendChild(g);
+  });
+}
+
+// helpers
+function findClass(name){ return (model.classes||[]).find(c=>c.name===name); }
+
+// Lint rules implementation
+function runLint(m){
+  const issues = [];
+  const classes = m.classes || [];
+  const assocs = m.associations || [];
+
+  // maps for quick checks
+  const classNames = classes.map(c=>c.name);
+  const assocPairs = assocs.map(a=> ({from:a.from,to:a.to,name:a.name, a}) );
+
+  // 1) Bidirecionalidade desnecessária: existe both A->B and B->A?
+  assocPairs.forEach(p=>{
+    const counterpart = assocPairs.find(q=>q.from===p.to && q.to===p.from);
+    if(counterpart){
+      issues.push({id: uid('bid'), severity:'warn', code:'BIDIRECTIONAL', desc:`Associação bidirecional detectada entre "${p.from}" e "${p.to}" (\"${p.a.name}\" e \"${counterpart.a.name}\").`, data: {from:p.from,to:p.to, pair:[p.a, counterpart.a]}});
+    }
+  });
+
+  // 2) IDs primitivos espalhados: atributo que termina com "Id" while referenced association exists
+  classes.forEach(c=>{
+    (c.attributes||[]).forEach(attr=>{
+      if(/Id$/.test(attr.name)){
+        // find association where other class has that name convention
+        const targetName = attr.name.replace(/Id$/,'');
+        // if a class with that name exists and there isn't a direct association from c to that class
+        if(classNames.includes(targetName) && !assocs.find(a=>a.from===c.name && a.to===targetName)){
+          issues.push({id: uid('prim'), severity:'warn', code:'PRIMITIVE_ID', desc:`Atributo primitivo "${attr.name}" em "${c.name}" provavelmente referencia "${targetName}" sem associação.`, data:{class:c.name,attr:attr.name,target:targetName}});
+        }
+      }
+    });
+  });
+
+  // 3) Vínculo com dados escondidos: association has attributes -> candidate for class of association
+  assocs.forEach(a=>{
+    if(a.attributes && a.attributes.length > 0){
+      issues.push({id: uid('vinc'), severity:'err', code:'ASSOC_WITH_ATTRS', desc:`A associação "${a.name}" entre ${a.from} e ${a.to} possui atributos (${a.attributes.map(x=>x.name).join(', ')}). Considere promover para Classe de Associação.`, data:{assoc:a}});
+    }
+  });
+
+  // 4) Coleções duplicadas: both sides have multiplicity with * to same target
+  assocs.forEach(a=>{
+    const rev = assocs.find(x=>x.from===a.to && x.to===a.from);
+    if(rev){
+      const aStar = (a.fromMult||'').includes('*') || (a.toMult||'').includes('*');
+      const rStar = (rev.fromMult||'').includes('*') || (rev.toMult||'').includes('*');
+      if(aStar && rStar){
+        issues.push({id: uid('dupcol'), severity:'warn', code:'DUP_COLLECTION', desc:`Coleções possivelmente duplicadas entre ${a.from}<->${a.to}. Verificar distinção semântica.`, data:{pair:[a,rev]}});
+      }
+    }
+  });
+
+  // 5) Multiplicidade frouxa: 0..* quando regra de negócio sugere 1..*
+  // We can't infer business rules, but we flag 0..* in associations
+  assocs.forEach(a=>{
+    if((a.fromMult||'').startsWith('0..') || (a.toMult||'').startsWith('0..')){
+      issues.push({id: uid('mult'), severity:'info', code:'LOOSE_MULT', desc:`Multiplicidade solta detectada em "${a.name}" (${a.from}:${a.fromMult} <-> ${a.to}:${a.toMult}). Considere se 0..* é realmente aceitável.`, data:{assoc:a}});
+    }
+  });
+
+  // 6) Ciclo de dependência: detect cycles in association graph (simple)
+  const graph = {};
+  classes.forEach(c=> graph[c.name]=[]);
+  assocs.forEach(a=> { if(graph[a.from]) graph[a.from].push(a.to); });
+  const cycles = detectCycles(graph);
+  cycles.forEach(cycle=>{
+    issues.push({id: uid('cycle'), severity:'err', code:'CYCLE', desc:`Ciclo de dependência detectado: ${cycle.join(' → ')}.`, data:{cycle}});
+  });
+
+  // 7) Classe "Deus": class with many associations > 4
+  classes.forEach(c=>{
+    const count = assocs.filter(a=>a.from===c.name||a.to===c.name).length;
+    if(count >= 5){
+      issues.push({id: uid('god'), severity:'warn', code:'GOD_CLASS', desc:`Classe "${c.name}" possui ${count} associações (potencial classe 'Deus'). Considere separar responsabilidades.`, data:{class:c.name,count}});
+    }
+  });
+
+  // 8) Qualificador inconsistente: detect attributes named 'code' or 'number' repeated across same class namespace
+  classes.forEach(c=>{
+    const codes = (c.attributes||[]).filter(a=>/code|number|id/i.test(a.name));
+    if(codes.length>1){
+      issues.push({id: uid('qual'), severity:'info', code:'QUALIFIER', desc:`Classe "${c.name}" tem múltiplos candidatos a qualificador (${codes.map(x=>x.name).join(', ')}). Verifique escopo e unicidade.`, data:{class:c.name,attrs:codes.map(a=>a.name)}});
+    }
+  });
+
+  // de-duplicate reported issues by code+desc
+  const uniq = [];
+  const seen = new Set();
+  for(const it of issues){
+    const key = `${it.code}|${it.desc}`;
+    if(!seen.has(key)){ uniq.push(it); seen.add(key); }
+  }
+  return uniq;
+}
+
+// detect cycles simple DFS
+function detectCycles(graph){
+  const visited = new Set(), stack = [], cycles = [];
+  function dfs(node, path){
+    if(path.includes(node)){
+      const cycle = path.slice(path.indexOf(node)).concat(node);
+      cycles.push(cycle);
+      return;
+    }
+    if(visited.has(node)) return;
+    visited.add(node);
+    const next = graph[node] || [];
+    next.forEach(n => dfs(n, path.concat(node)));
+  }
+  Object.keys(graph).forEach(n => dfs(n, []));
+  // normalize cycles (unique)
+  const uniq = [];
+  const seen = new Set();
+  cycles.forEach(c=>{
+    const key = c.join('->');
+    if(!seen.has(key)){ uniq.push(c); seen.add(key); }
+  });
+  return uniq;
+}
+
+// render report list
+function renderReport(){
+  clearEl(lintListEl);
+  if(!report || report.length===0){
+    const d = document.createElement('div'); d.className='muted'; d.textContent='Nenhum cheiro detectado.';
+    lintListEl.appendChild(d); return;
+  }
+  report.forEach(r=>{
+    const it = document.createElement('div'); it.className='lint-item';
+    const sev = document.createElement('span'); sev.className='severity ' + (r.severity==='err'?'sev-err':(r.severity==='warn'?'sev-warn':'sev-info'));
+    sev.textContent = r.severity.toUpperCase();
+    const title = document.createElement('div'); title.style.marginTop='6px'; title.innerHTML = `<strong>${r.code}</strong> — ${r.desc}`;
+    it.appendChild(sev); it.appendChild(title);
+    // show data
+    const pre = document.createElement('pre'); pre.style.marginTop='8px'; pre.textContent = JSON.stringify(r.data || {}, null, 2);
+    it.appendChild(pre);
+    lintListEl.appendChild(it);
+  });
+}
+
+// render actions (suggestions)
+function renderActions(rpt){
+  actionsEl.innerHTML='';
+  if(!rpt || rpt.length===0) return;
+  // collect actionable types
+  const hasBid = rpt.some(r=>r.code==='BIDIRECTIONAL');
+  const hasAssocWithAttrs = rpt.some(r=>r.code==='ASSOC_WITH_ATTRS');
+  const hasPrim = rpt.some(r=>r.code==='PRIMITIVE_ID');
+
+  if(hasBid){
+    const b = document.createElement('button'); b.textContent='Remover back-reference (automático)';
+    b.className='btn-ghost'; b.addEventListener('click', ()=> applyRemoveBackReference());
+    actionsEl.appendChild(b);
+  }
+  if(hasAssocWithAttrs){
+    const b2 = document.createElement('button'); b2.textContent='Promover associação c/ atributos → Classe';
+    b2.className='btn'; b2.addEventListener('click', ()=> applyPromoteAssociation());
+    actionsEl.appendChild(b2);
+  }
+  if(hasPrim){
+    const b3 = document.createElement('button'); b3.textContent='Transformar primitive Id → association (sugestão)';
+    b3.className='btn-ghost'; b3.addEventListener('click', ()=> applyPrimitiveToAssociation());
+    actionsEl.appendChild(b3);
+  }
+  // always add a "try fix small" button
+  const b4 = document.createElement('button'); b4.textContent='Aplicar correções leves (bid & promote)'; b4.className='btn-ghost';
+  b4.addEventListener('click', ()=> { applyRemoveBackReference(); applyPromoteAssociation(); render(); report = runLint(model); renderReport(); renderActions(report); });
+  actionsEl.appendChild(b4);
+}
+
+// Action: remove back-references for bidirectional pairs (keeps first assoc, removes counterpart)
+function applyRemoveBackReference(){
+  const assocs = model.associations || [];
+  const toRemove = new Set();
+  assocs.forEach(a=>{
+    const counterpart = assocs.find(b=>b.from===a.to && b.to===a.from);
+    if(counterpart){
+      // prefer to keep the association with attributes or keep the first
+      if(!a.attributes || a.attributes.length===0){
+        // remove a, keep counterpart
+        toRemove.add(a);
+      } else {
+        toRemove.add(counterpart);
+      }
+    }
+  });
+  if(toRemove.size===0){ alert('Nenhuma back-reference encontrada para remover.'); return; }
+  model.associations = assocs.filter(a=>!toRemove.has(a));
+  jsonText.value = JSON.stringify(model, null, 2);
+  report = runLint(model);
+  render();
+  renderReport();
+  renderActions(report);
+  alert('Back-references removidas (ou agrupadas). Verifique o modelo.');
+}
+
+// Action: promote associations with attributes to class of association
+function applyPromoteAssociation(){
+  const assocs = model.associations || [];
+  const toPromote = assocs.filter(a=>a.attributes && a.attributes.length>0);
+  if(toPromote.length===0){ alert('Nenhuma associação com atributos encontrada.'); return; }
+  toPromote.forEach(a=>{
+    // create new class name
+    const newClassName = `${capitalize(a.name)}Association`;
+    // create new class with attributes from association and link to both classes via associations
+    const newClass = { name: newClassName, attributes: (a.attributes || []).map(x=>({name:x.name,type:x.type||'string'})) };
+    // add to model classes
+    if(!model.classes.find(c=>c.name===newClassName)) model.classes.push(newClass);
+    // remove original association
+    model.associations = model.associations.filter(x=>x!==a);
+    // add two associations: A -> newClass, newClass -> B
+    model.associations.push({ from: a.from, to: newClassName, name: `${a.from}_${a.name}`, fromMult: a.fromMult|| '1..*', toMult: '0..*', attributes:[] });
+    model.associations.push({ from: newClassName, to: a.to, name: `${newClassName}_${a.to}`, fromMult: '0..*', toMult: a.toMult||'1..1', attributes:[] });
+  });
+  jsonText.value = JSON.stringify(model, null, 2);
+  report = runLint(model);
+  render();
+  renderReport();
+  renderActions(report);
+  alert('Associações promovidas a classes de associação (quando aplicável).');
+}
+
+// Action: primitive id -> association suggestion (convert attribute XId into association to class X if exists)
+// apply naive conversion: for each class with attr ending with Id and class target exists, remove attribute and add association
+function applyPrimitiveToAssociation(){
+  const classes = model.classes || [];
+  const assocs = model.associations || [];
+  let changed = false;
+  classes.forEach(c=>{
+    const attrs = c.attributes || [];
+    const idAttrs = attrs.filter(a=>/Id$/.test(a.name));
+    idAttrs.forEach(a=>{
+      const target = a.name.replace(/Id$/,'');
+      if(classes.find(x=>x.name===target) && !assocs.find(as=>as.from===c.name && as.to===target)){
+        // remove attr
+        c.attributes = c.attributes.filter(at=>at!==a);
+        // add association
+        model.associations.push({ from: c.name, to: target, name: `${c.name}_${target}`, fromMult: '0..1', toMult: '0..*', attributes: [] });
+        changed = true;
+      }
+    });
+  });
+  if(!changed) { alert('Nenhuma conversão automática aplicável.'); return; }
+  jsonText.value = JSON.stringify(model, null, 2);
+  report = runLint(model);
+  render();
+  renderReport();
+  renderActions(report);
+  alert('Conversões aplicadas (primitive id -> association). Verifique o modelo.');
+}
+
+// helpers
+function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+// initialize with sample
+loadModel(sampleModel, 'exemplo.json');
+render();
+
+// End of script
+</script>
+</body>
+</html>
