@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>NOA-like Notes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  font-family: system-ui, sans-serif;
+  background: #f6f7fb;
+  margin: 0;
+}
+
+header {
+  background: #111827;
+  color: white;
+  padding: 16px;
+  text-align: center;
+}
+
+main {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 10px;
+}
+
+.card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  margin-bottom: 16px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+  gap: 10px;
+}
+
+label {
+  font-size: 12px;
+  color: #374151;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+textarea {
+  min-height: 140px;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+button {
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary { background:#111827; color:white; }
+.secondary { background:#e5e7eb; }
+.danger { background:#ef4444; color:white; }
+
+.status {
+  margin-top: 8px;
+  font-size: 13px;
+}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>NOA-like Notes</h1>
+  <p>Anotações automáticas por voz</p>
+</header>
+
+<main>
+
+<!-- Dados da sessão -->
+<div class="card">
+  <h2>Dados da Sessão</h2>
+  <div class="grid">
+    <div>
+      <label>Cliente</label>
+      <input id="cliente">
+    </div>
+    <div>
+      <label>Data</label>
+      <input type="date" id="data">
+    </div>
+    <div>
+      <label>Hora</label>
+      <input type="time" id="hora">
+    </div>
+    <div>
+      <label>Tipo</label>
+      <input placeholder="Ex: Terapia" id="tipo">
+    </div>
+  </div>
+</div>
+
+<!-- Transcrição -->
+<div class="card">
+  <h2>Transcrição</h2>
+  <textarea id="transcricao" placeholder="Use o botão de gravação ou digite..."></textarea>
+
+  <div class="buttons">
+    <button id="btnGravar" class="primary">🎙️ Gravar</button>
+    <button id="btnParar" class="secondary" disabled>⏹️ Parar</button>
+  </div>
+
+  <div class="status" id="status"></div>
+</div>
+
+<!-- Nota -->
+<div class="card">
+  <h2>Nota Gerada</h2>
+  <textarea id="nota"></textarea>
+
+  <div class="buttons">
+    <button class="primary" onclick="gerarNota()">🤖 Gerar Nota</button>
+    <button class="danger" onclick="limpar()">🗑️ Limpar</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+let recognition;
+let gravando = false;
+
+const btnGravar = document.getElementById("btnGravar");
+const btnParar = document.getElementById("btnParar");
+const status = document.getElementById("status");
+const transcricao = document.getElementById("transcricao");
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.lang = "pt-BR";
+  recognition.continuous = true;
+
+  recognition.onresult = e => {
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      transcricao.value += e.results[i][0].transcript + " ";
+    }
+  };
+
+  recognition.onend = () => {
+    if (gravando) recognition.start();
+  };
+} else {
+  status.innerText = "Navegador não suporta reconhecimento de voz.";
+}
+
+btnGravar.onclick = () => {
+  gravando = true;
+  recognition.start();
+  btnGravar.disabled = true;
+  btnParar.disabled = false;
+  status.innerText = "🎙️ Gravando...";
+};
+
+btnParar.onclick = () => {
+  gravando = false;
+  recognition.stop();
+  btnGravar.disabled = false;
+  btnParar.disabled = true;
+  status.innerText = "Gravação finalizada.";
+};
+
+});
+
+
+async function gerarNota() {
+  const dados = {
+    cliente: document.getElementById("cliente").value,
+    data: document.getElementById("data").value,
+    hora: document.getElementById("hora").value,
+    tipo: document.getElementById("tipo").value,
+    transcricao: document.getElementById("transcricao").value
+  };
+
+  document.getElementById("nota").value = "Gerando nota com IA...";
+
+  try {
+    const resposta = await fetch("http://localhost:3000/api/gerar-nota", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dados)
+    });
+
+    const resultado = await resposta.json();
+    document.getElementById("nota").value = resultado.nota;
+
+  } catch (erro) {
+    document.getElementById("nota").value =
+      "Erro ao conectar com o backend.";
+  }
+}
+
+
+function limpar() {
+  transcricao.value = "";
+  nota.value = "";
+}
+</script>
+
+</body>
+</html>

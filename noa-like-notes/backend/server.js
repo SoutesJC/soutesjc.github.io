@@ -1,76 +1,60 @@
 import express from "express";
-import fetch from "node-fetch";
+import cors from "cors";
 import dotenv from "dotenv";
+import OpenAI from "openai";
 
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+app.use(cors());            // Permite frontend acessar
+app.use(express.json());    // Permite JSON no body
 
-// Permite ler JSON
-app.use(express.json());
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
-/**
- * 1️⃣ SERVIR ARQUIVOS ESTÁTICOS
- * Tudo que estiver em /public fica acessível
- */
-app.use(express.static("public"));
-
-/**
- * 2️⃣ ENDPOINT DA IA
- */
-app.post("/gerar-nota", async (req, res) => {
+/*
+  ROTA PRINCIPAL
+  Recebe dados da sessão + transcrição
+  Retorna nota profissional gerada pela IA
+*/
+app.post("/api/gerar-nota", async (req, res) => {
   try {
-    const { dadosSessao, transcricao } = req.body;
-
-    if (!transcricao) {
-      return res.status(400).json({ error: "Transcrição vazia" });
-    }
+    const { cliente, data, hora, tipo, transcricao } = req.body;
 
     const prompt = `
-Gere uma nota profissional de sessão.
+Você é um profissional que gera notas clínicas estruturadas.
 
-CLIENTE: ${dadosSessao.cliente}
-DATA: ${dadosSessao.data}
-HORA: ${dadosSessao.hora}
-DURAÇÃO: ${dadosSessao.duracao} minutos
-INTENÇÃO: ${dadosSessao.intencao}
+Dados da sessão:
+Cliente: ${cliente}
+Data: ${data}
+Hora: ${hora}
+Tipo: ${tipo}
 
-TRANSCRIÇÃO:
+Transcrição da sessão:
 ${transcricao}
+
+Gere uma nota profissional, clara e objetiva.
 `;
 
-    const response = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: "Você gera notas profissionais." },
-            { role: "user", content: prompt }
-          ],
-          temperature: 0.3
-        })
-      }
-    );
+    const resposta = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "Você é um assistente profissional de documentação clínica." },
+        { role: "user", content: prompt }
+      ]
+    });
 
-    const data = await response.json();
-    res.json({ nota: data.choices[0].message.content });
+    res.json({
+      nota: resposta.choices[0].message.content
+    });
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro interno" });
+  } catch (erro) {
+    console.error(erro);
+    res.status(500).json({ erro: "Erro ao gerar nota com IA" });
   }
 });
 
-/**
- * 3️⃣ INICIAR SERVIDOR
- */
-app.listen(PORT, () => {
-  console.log(`🚀 App rodando em http://localhost:${PORT}`);
+app.listen(process.env.PORT, () => {
+  console.log("✅ Backend rodando em http://localhost:3000");
 });
