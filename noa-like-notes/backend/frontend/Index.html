@@ -205,11 +205,11 @@ async function gerarNota() {
   document.getElementById("nota").value = "Gerando nota com IA...";
 
   try {
-    const resposta = await fetch("http://localhost:3000/api/gerar-nota", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dados)
-    });
+  fetch("/api/gerar-nota", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(dados)
+  });
 
     const resultado = await resposta.json();
     document.getElementById("nota").value = resultado.nota;

@@ -1,48 +1,51 @@
 import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 
 dotenv.config();
 
 const app = express();
-app.use(cors());            // Permite frontend acessar
-app.use(express.json());    // Permite JSON no body
+
+/*
+  CORS MANUAL (aceita file://, localhost e OPTIONS)
+*/
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+app.use(express.json());
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-/*
-  ROTA PRINCIPAL
-  Recebe dados da sessão + transcrição
-  Retorna nota profissional gerada pela IA
-*/
 app.post("/api/gerar-nota", async (req, res) => {
+  console.log("📥 Requisição recebida");
+
   try {
     const { cliente, data, hora, tipo, transcricao } = req.body;
 
     const prompt = `
-Você é um profissional que gera notas clínicas estruturadas.
+Gere uma nota profissional baseada nesta sessão:
 
-Dados da sessão:
 Cliente: ${cliente}
 Data: ${data}
 Hora: ${hora}
 Tipo: ${tipo}
 
-Transcrição da sessão:
+Transcrição:
 ${transcricao}
-
-Gere uma nota profissional, clara e objetiva.
 `;
 
     const resposta = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "Você é um assistente profissional de documentação clínica." },
-        { role: "user", content: prompt }
-      ]
+      messages: [{ role: "user", content: prompt }]
     });
 
     res.json({
@@ -50,11 +53,11 @@ Gere uma nota profissional, clara e objetiva.
     });
 
   } catch (erro) {
-    console.error(erro);
-    res.status(500).json({ erro: "Erro ao gerar nota com IA" });
+    console.error("❌ Erro:", erro.message);
+    res.status(500).json({ erro: erro.message });
   }
 });
 
-app.listen(process.env.PORT, () => {
-  console.log("✅ Backend rodando em http://localhost:3000");
+app.listen(3000, () => {
+  console.log("🚀 Backend rodando em http://localhost:3000");
 });
