@@ -1,89 +1,154 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NOA-like Notes (MVP)</title>
-  <style>
-    :root { color-scheme: light; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background:#f6f7fb; }
-    header { padding: 16px 18px; background: #111827; color: #fff; }
-    header h1 { margin: 0; font-size: 18px; }
-    header p { margin: 6px 0 0; opacity: .8; font-size: 13px; }
-    main { max-width: 1100px; margin: 18px auto; padding: 0 14px 22px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .card { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.06); }
-    .card h2 { margin: 0 0 10px; font-size: 15px; }
-    label { font-size: 12px; color:#374151; display:block; margin-bottom: 6px; }
-    input[type="text"], input[type="date"], input[type="time"], select, textarea {
-      width: 100%; box-sizing: border-box;
-      padding: 10px 10px; border: 1px solid #e5e7eb; border-radius: 10px;
-      background: #fff; outline: none;
-    }
-    textarea { min-height: 150px; resize: vertical; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .row3 { display: grid; grid-template-columns: 1.2fr .9fr .9fr; gap: 10px; }
-    .btns { display:flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-    button {
-      border: 0; border-radius: 12px; padding: 10px 12px;
-      background: #111827; color: #fff; cursor: pointer; font-weight: 600; font-size: 13px;
-    }
-    button.secondary { background: #eef2ff; color:#111827; }
-    button.danger { background: #ef4444; }
-    button:disabled { opacity:.55; cursor:not-allowed; }
-    .pill { display:inline-flex; gap:8px; align-items:center; padding: 8px 10px; border-radius: 999px; background:#f3f4f6; font-size: 12px; color:#111827;}
-    .status { font-size: 12px; color:#374151; margin-top: 10px; }
-    .small { font-size: 12px; color:#6b7280; line-height: 1.4; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    .ok { color:#16a34a; font-weight:700; }
-    .warn { color:#b45309; font-weight:700; }
-    .err { color:#dc2626; font-weight:700; }
-    .full { grid-column: 1 / -1; }
-    .divider { height:1px; background:#e5e7eb; margin: 12px 0; }
-    @media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NOA-like Notes (MVP)</title>
+
+<style>
+:root { color-scheme: light; }
+body { font-family: system-ui; margin: 0; background:#f6f7fb; }
+header { padding: 16px; background: #111827; color: #fff; }
+main { max-width: 1100px; margin: 18px auto; padding: 14px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.card { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.06); }
+.full { grid-column: 1 / -1; }
+textarea { min-height: 150px; width:100%; }
+button { padding: 10px; border-radius: 10px; border:0; background:#111827; color:#fff; }
+button.secondary { background:#e5e7eb; color:#111827; }
+button.danger { background:#ef4444; }
+.btns { display:flex; gap:10px; flex-wrap:wrap; }
+.status { margin-top:8px; font-size:12px; }
+.ok { color:green; font-weight:bold; }
+.err { color:red; font-weight:bold; }
+</style>
 </head>
+
 <body>
-  <header>
-    <h1>NOA-like Notes (MVP) — Anotações Automáticas</h1>
-    <p>Funciona 100% no navegador. Você pode ditar (SpeechRecognition) ou colar a transcrição e gerar notas estruturadas.</p>
-  </header>
 
-  <main>
-    <div class="grid">
-      <!-- Sessão -->
-      <section class="card">
-        <h2>1) Dados da sessão</h2>
-        <div class="row3">
-          <div>
-            <label for="clientName">Cliente</label>
-            <input id="clientName" type="text" placeholder="Ex.: Íris" />
-          </div>
-          <div>
-            <label for="sessionDate">Data</label>
-            <input id="sessionDate" type="date" />
-          </div>
-          <div>
-            <label for="sessionTime">Hora</label>
-            <input id="sessionTime" type="time" />
-          </div>
-        </div>
+<header>
+<h1>NOA-like Notes (MVP)</h1>
+<p>Ditado por voz + geração automática de notas</p>
+</header>
 
-        <div class="row" style="margin-top:10px;">
-          <div>
-            <label for="duration">Duração (min)</label>
-            <input id="duration" type="text" placeholder="Ex.: 60" />
-          </div>
-          <div>
-            <label for="template">Modelo de nota</label>
-            <select id="template">
-              <option value="completa">Nota Completa (Profissional)</option>
-              <option value="rapida">Nota Rápida (3 blocos)</option>
-              <option value="cliente">Resumo para o Cliente (opcional)</option>
-            </select>
-          </div>
-        </div>
+<main>
+<div class="grid">
 
-        <div style="margin-top:10px;">
-          <label for="intencao">Intenção do cliente (1 frase)</label>
-          <input id="intencao" type="text" placeholder="Ex.: Busc
+<section class="card">
+<h2>1) Dados da Sessão</h2>
+
+<label>Cliente</label>
+<input id="clientName" type="text">
+
+<label>Data</label>
+<input id="sessionDate" type="date">
+
+<label>Hora</label>
+<input id="sessionTime" type="time">
+
+<label>Duração (min)</label>
+<input id="duration" type="text">
+
+<label>Intenção do cliente</label>
+<input id="intencao" type="text">
+
+<label>Modelo</label>
+<select id="template">
+  <option value="completa">Nota Completa</option>
+  <option value="rapida">Nota Rápida</option>
+  <option value="cliente">Resumo para Cliente</option>
+</select>
+</section>
+
+<section class="card">
+<h2>2) Transcrição</h2>
+<textarea id="transcricao"></textarea>
+
+<div class="btns">
+<button id="btnGravar">🎙️ Iniciar</button>
+<button id="btnParar" class="secondary" disabled>⏹️ Parar</button>
+<button id="btnGerar">📝 Gerar Nota</button>
+<button id="btnLimpar" class="danger">🗑️ Limpar</button>
+</div>
+
+<div id="status" class="status"></div>
+</section>
+
+<section class="card full">
+<h2>3) Nota Gerada</h2>
+<textarea id="notaGerada"></textarea>
+</section>
+
+</div>
+</main>
+
+<script>
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition, gravando = false;
+
+const btnGravar = document.getElementById("btnGravar");
+const btnParar = document.getElementById("btnParar");
+const statusEl = document.getElementById("status");
+const transcricaoEl = document.getElementById("transcricao");
+const notaGeradaEl = document.getElementById("notaGerada");
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.lang = "pt-BR";
+  recognition.continuous = true;
+
+  recognition.onresult = e => {
+    let texto = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      texto += e.results[i][0].transcript + " ";
+    }
+    transcricaoEl.value += texto;
+  };
+
+  recognition.onend = () => gravando && recognition.start();
+}
+
+btnGravar.onclick = () => {
+  gravando = true;
+  recognition.start();
+  btnGravar.disabled = true;
+  btnParar.disabled = false;
+  statusEl.innerHTML = "<span class='ok'>Gravando...</span>";
+};
+
+btnParar.onclick = () => {
+  gravando = false;
+  recognition.stop();
+  btnGravar.disabled = false;
+  btnParar.disabled = true;
+  statusEl.innerHTML = "Gravação finalizada.";
+};
+
+btnGerar.onclick = () => {
+  const texto = transcricaoEl.value;
+  if (!texto) {
+    statusEl.innerHTML = "<span class='err'>Transcrição vazia</span>";
+    return;
+  }
+
+  notaGeradaEl.value = `
+RESUMO DA SESSÃO:
+${texto.split(".").slice(0,3).join(".")}
+
+OBS:
+Nota gerada automaticamente.
+  `.trim();
+
+  statusEl.innerHTML = "<span class='ok'>Nota gerada!</span>";
+};
+
+btnLimpar.onclick = () => {
+  transcricaoEl.value = "";
+  notaGeradaEl.value = "";
+  statusEl.innerHTML = "";
+};
+</script>
+
+</body>
+</html>
+
