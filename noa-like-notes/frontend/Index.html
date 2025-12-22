@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>NOA-like Notes</title>
+</head>
+
+<body>
+
+<h2>Dados da Sessão</h2>
+<input id="clientName" placeholder="Cliente"><br>
+<input id="sessionDate" type="date"><br>
+<input id="sessionTime" type="time"><br>
+<input id="duration" placeholder="Duração (min)"><br>
+<input id="intencao" placeholder="Intenção"><br>
+
+<h2>Transcrição</h2>
+<textarea id="transcricao" rows="6"></textarea><br>
+
+<button id="btnGerarIA">🤖 Gerar Nota com IA</button>
+
+<h2>Nota Gerada</h2>
+<textarea id="notaGerada" rows="12"></textarea>
+
+<p id="status"></p>
+
+<script>
+const btnGerarIA = document.getElementById("btnGerarIA");
+const notaEl = document.getElementById("notaGerada");
+const statusEl = document.getElementById("status");
+
+btnGerarIA.onclick = async () => {
+
+  statusEl.innerText = "Gerando nota com IA...";
+
+  const dadosSessao = {
+    cliente: clientName.value,
+    data: sessionDate.value,
+    hora: sessionTime.value,
+    duracao: duration.value,
+    intencao: intencao.value
+  };
+
+  const transcricao = document.getElementById("transcricao").value;
+
+  const response = await fetch("http://localhost:3000/gerar-nota", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dadosSessao, transcricao })
+  });
+
+  const data = await response.json();
+  notaEl.value = data.nota;
+
+  statusEl.innerText = "Nota gerada com sucesso.";
+};
+</script>
+
+</body>
+</html>
+
