@@ -1,10 +1,4 @@
-/**
- * Backend seguro para integração com OpenAI
- * A API Key fica SOMENTE aqui
- */
-
 import express from "express";
-import cors from "cors";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
 
@@ -13,14 +7,17 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-// Permite que o frontend chame este backend
-app.use(cors());
-
-// Permite JSON no body
+// Permite ler JSON
 app.use(express.json());
 
 /**
- * Endpoint que gera a nota usando OpenAI
+ * 1️⃣ SERVIR ARQUIVOS ESTÁTICOS
+ * Tudo que estiver em /public fica acessível
+ */
+app.use(express.static("public"));
+
+/**
+ * 2️⃣ ENDPOINT DA IA
  */
 app.post("/gerar-nota", async (req, res) => {
   try {
@@ -31,25 +28,16 @@ app.post("/gerar-nota", async (req, res) => {
     }
 
     const prompt = `
-Você é um assistente profissional especializado em gerar notas de sessão.
+Gere uma nota profissional de sessão.
 
-DADOS DA SESSÃO:
-Cliente: ${dadosSessao.cliente}
-Data: ${dadosSessao.data}
-Hora: ${dadosSessao.hora}
-Duração: ${dadosSessao.duracao} minutos
-Intenção do cliente: ${dadosSessao.intencao}
+CLIENTE: ${dadosSessao.cliente}
+DATA: ${dadosSessao.data}
+HORA: ${dadosSessao.hora}
+DURAÇÃO: ${dadosSessao.duracao} minutos
+INTENÇÃO: ${dadosSessao.intencao}
 
 TRANSCRIÇÃO:
 ${transcricao}
-
-Gere uma NOTA PROFISSIONAL estruturada com:
-- Cabeçalho
-- Resumo
-- Pontos principais
-- Intervenções
-- Encaminhamentos
-- Observações
 `;
 
     const response = await fetch(
@@ -72,16 +60,17 @@ Gere uma NOTA PROFISSIONAL estruturada com:
     );
 
     const data = await response.json();
-    const nota = data.choices[0].message.content;
-
-    res.json({ nota });
+    res.json({ nota: data.choices[0].message.content });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Erro ao gerar nota" });
+    res.status(500).json({ error: "Erro interno" });
   }
 });
 
+/**
+ * 3️⃣ INICIAR SERVIDOR
+ */
 app.listen(PORT, () => {
-  console.log(`✅ Backend rodando em http://localhost:${PORT}`);
+  console.log(`🚀 App rodando em http://localhost:${PORT}`);
 });

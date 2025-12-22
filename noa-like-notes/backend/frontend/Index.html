@@ -43,7 +43,7 @@ btnGerarIA.onclick = async () => {
 
   const transcricao = document.getElementById("transcricao").value;
 
-  const response = await fetch("http://localhost:3000/gerar-nota", {
+  fetch("/gerar-nota", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ dadosSessao, transcricao })
