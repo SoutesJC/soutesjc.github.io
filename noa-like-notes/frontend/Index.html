@@ -193,6 +193,7 @@ btnParar.onclick = () => {
 });
 
 
+
 async function gerarNota() {
   const dados = {
     cliente: document.getElementById("cliente").value,
@@ -205,20 +206,27 @@ async function gerarNota() {
   document.getElementById("nota").value = "Gerando nota com IA...";
 
   try {
-  fetch("/api/gerar-nota", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(dados)
-  });
+    const resposta = await fetch("http://localhost:3000/api/gerar-nota", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dados)
+    });
+
+    if (!resposta.ok) {
+      throw new Error("Erro HTTP " + resposta.status);
+    }
 
     const resultado = await resposta.json();
     document.getElementById("nota").value = resultado.nota;
 
   } catch (erro) {
+    console.error(erro);
     document.getElementById("nota").value =
       "Erro ao conectar com o backend.";
   }
 }
+
+document.getElementById("nota").value = "Gerando nota com IA...";
 
 
 function limpar() {
