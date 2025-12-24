@@ -1,10 +1,7 @@
 function mostrarTela(tela) {
   document.getElementById("tela-cadastro").classList.add("hidden");
   document.getElementById("tela-historico").classList.add("hidden");
-
   document.getElementById(`tela-${tela}`).classList.remove("hidden");
-
-  if (tela === "historico") carregarHistorico();
 }
 
 function novaSessao() {
@@ -36,4 +33,9 @@ function novaSessao() {
     window.gravando = false;
     window.recognition.stop();
   }
+
+  // 🔄 resetar estado de edição
+  sessaoEditandoId = null;
+  horaOriginal = null;
+
 }

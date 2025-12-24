@@ -19,9 +19,20 @@ async function gerarNota() {
   nota.value = json.nota;
 }
 
+let sessaoEditandoId = null;
+let horaOriginal = null;
+
 async function salvarSessao() {
+
+  // 🚨 ALERTA SOMENTE EM EDIÇÃO
+  if (sessaoEditandoId !== null && hora.value === horaOriginal) {
+    alert("Para atualizar a sessão, altere o horário.");
+    return;
+  }
+
+  // daqui pra baixo continua seu fluxo normal
   await fetch("http://localhost:3000/api/sessoes", {
-    method: "POST",
+    method: "POST", // ou PUT futuramente
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       cliente: cliente.value,
@@ -34,4 +45,9 @@ async function salvarSessao() {
   });
 
   alert("Sessão salva!");
+  novaSessao();
+
+  // 🔄 limpa estado
+  sessaoEditandoId = null;
+  horaOriginal = null;
 }

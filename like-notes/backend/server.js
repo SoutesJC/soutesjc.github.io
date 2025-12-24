@@ -7,6 +7,7 @@ import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import path from "path";
 
+
 dotenv.config();
 
 const app = express();
@@ -50,9 +51,7 @@ ${transcricao}
       messages: [{ role: "user", content: prompt }]
     });
 
-    res.json({
-      nota: resposta.choices[0].message.content
-    });
+    res.json({ nota: resposta.choices[0].message.content });
 
   } catch (erro) {
     console.error(erro);
@@ -60,23 +59,30 @@ ${transcricao}
   }
 });
 
-
-
 /* ===========================
    CRUD DE SESSÕES
 =========================== */
 
-// CREATE
+// CREATE (com proteção contra duplicação)
 app.post("/api/sessoes", async (req, res) => {
   const { cliente, data, hora, tipo, transcricao, nota } = req.body;
 
-  const result = await db.run(
-    `INSERT INTO sessoes (cliente, data, hora, tipo, transcricao, nota)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [cliente, data, hora, tipo, transcricao, nota]
-  );
+  try {
+    const result = await db.run(
+      `INSERT INTO sessoes (cliente, data, hora, tipo, transcricao, nota)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [cliente, data, hora, tipo, transcricao, nota]
+    );
 
-  res.json({ id: result.lastID });
+    res.json({ id: result.lastID });
+
+  } catch (err) {
+    if (err.code === "SQLITE_CONSTRAINT") {
+      return res.status(409).json({ erro: "Sessão já existe" });
+    }
+    console.error(err);
+    res.status(500).json({ erro: "Erro ao salvar sessão" });
+  }
 });
 
 // READ ALL
@@ -117,7 +123,7 @@ app.put("/api/sessoes/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
-// DELETE
+// DELETE (seguro, por ID)
 app.delete("/api/sessoes/:id", async (req, res) => {
   await db.run(`DELETE FROM sessoes WHERE id = ?`, [req.params.id]);
   res.json({ ok: true });

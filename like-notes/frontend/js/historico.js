@@ -27,6 +27,9 @@ async function editar(id) {
   const res = await fetch(`http://localhost:3000/api/sessoes/${id}`);
   const s = await res.json();
 
+    sessaoEditandoId = id;
+    horaOriginal = s.hora;
+
   mostrarTela("cadastro");
 
   cliente.value = s.cliente;
