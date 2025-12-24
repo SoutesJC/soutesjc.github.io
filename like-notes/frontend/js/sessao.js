@@ -19,6 +19,47 @@ async function gerarNota() {
   nota.value = json.nota;
 }
 
+
+async function gerarNotaPorAudio() {
+  const fileInput = document.getElementById("audioFile");
+
+  if (!fileInput.files.length) {
+    alert("Selecione um arquivo de áudio");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("audio", fileInput.files[0]);
+
+  // dados da sessão continuam sendo enviados
+  formData.append("cliente", cliente.value);
+  formData.append("data", data.value);
+  formData.append("hora", hora.value);
+  formData.append("tipo", tipo.value);
+
+  nota.value = "Processando áudio e gerando nota...";
+
+  try {
+    const res = await fetch(
+      "http://localhost:3000/api/gerar-nota-audio",
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+
+    const json = await res.json();
+
+    // backend devolve a transcrição também
+    transcricao.value = json.transcricao;
+    nota.value = json.nota;
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao processar áudio");
+  }
+}
+
 let sessaoEditandoId = null;
 let horaOriginal = null;
 

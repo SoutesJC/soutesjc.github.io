@@ -32,6 +32,16 @@
     <input id="tipo" placeholder="Tipo">
   </div>
 
+  <div class="card">
+  <h3>Gerar nota a partir de áudio</h3>
+
+  <input type="file" id="audioFile" accept="audio/*">
+
+  <button onclick="gerarNotaPorAudio()">
+    🎧 Gerar Nota pelo Áudio
+  </button>
+</div>
+
   <textarea id="transcricao" placeholder="Transcrição"></textarea>
   <textarea id="nota" placeholder="Nota gerada"></textarea>
 
