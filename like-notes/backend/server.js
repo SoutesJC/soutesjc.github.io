@@ -3,7 +3,9 @@ import dotenv from "dotenv";
 import cors from "cors";
 import OpenAI from "openai/index.js";
 import { db } from "./database.js";
-
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
+import path from "path";
 
 dotenv.config();
 
