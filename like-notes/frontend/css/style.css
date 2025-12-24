@@ -1,0 +1,62 @@
+body {
+  font-family: system-ui, sans-serif;
+  background: #f6f7fb;
+  margin: 0;
+}
+
+header {
+  background: #111827;
+  color: white;
+  padding: 16px;
+  text-align: center;
+}
+
+.menu {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background: #e5e7eb;
+}
+
+.menu button {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+main {
+  max-width: 900px;
+  margin: auto;
+  padding: 10px;
+}
+
+.tela {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+}
+
+.hidden {
+  display: none;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+  gap: 10px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 120px;
+  margin-top: 10px;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
