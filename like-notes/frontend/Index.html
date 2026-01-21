@@ -46,8 +46,6 @@
   <textarea id="nota" placeholder="Nota gerada"></textarea>
 
   <div class="buttons">
-    <button onclick="gravarAudio()">🎙️ Gravar</button>
-    <button onclick="gerarNota()">🤖 Gerar Nota</button>
     <button type="button" onclick="salvarSessao()">💾 Salvar</button>
   </div>
 </section>
@@ -55,6 +53,13 @@
 <!-- ================= HISTÓRICO ================= -->
 <section id="tela-historico" class="tela hidden">
   <h2>Histórico de Sessões</h2>
+
+  <input
+  type="text"
+  id="buscaHistorico"
+  placeholder="Buscar por cliente ou data (YYYY-MM-DD)"
+  oninput="buscarHistorico()"
+/>
   <div id="listaSessoes"></div>
 </section>
 

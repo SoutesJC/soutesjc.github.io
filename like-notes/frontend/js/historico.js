@@ -1,27 +1,17 @@
+let debounceTimer = null;
+
 window.carregarHistorico = carregarHistorico;
 window.abrirSessao = abrirSessao;
 window.excluir = excluir;
 
 
 async function carregarHistorico() {
-  const lista = document.getElementById("listaSessoes");
-  lista.innerHTML = "";
-
   const res = await fetch("http://localhost:3000/api/sessoes");
   const sessoes = await res.json();
 
-  sessoes.forEach(s => {
-    const div = document.createElement("div");
-    div.className = "sessao-item";
-    div.innerHTML = `
-      <strong>${s.cliente}</strong>
-      ${s.data} ${s.hora} - ${s.tipo}
-      <button onclick="editar(${s.id})">✏️</button>
-      <button onclick="excluir(${s.id})">🗑️</button>
-    `;
-    lista.appendChild(div);
-  });
+  renderizarHistorico(sessoes);
 }
+
 
 async function editar(id) {
   const res = await fetch(`http://localhost:3000/api/sessoes/${id}`);
@@ -49,3 +39,60 @@ async function excluir(id) {
 
   carregarHistorico();
 }
+
+async function buscarHistorico() {
+  const input = document.getElementById("buscaHistorico");
+  const q = input.value.trim();
+
+  clearTimeout(debounceTimer);
+
+  debounceTimer = setTimeout(async () => {
+    if (!q) {
+      carregarHistorico(); // volta ao normal
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/sessoes/busca?q=${encodeURIComponent(q)}`
+      );
+
+      const resultados = await res.json();
+      renderizarHistorico(resultados);
+
+    } catch (err) {
+      console.error("Erro na busca:", err);
+    }
+  }, 300); // 300ms é o ideal
+}
+
+function renderizarHistorico(sessoes) {
+  const lista = document.getElementById("listaSessoes");
+  lista.innerHTML = "";
+
+  if (sessoes.length === 0) {
+    lista.innerHTML = "<p>Nenhum resultado encontrado.</p>";
+    return;
+  }
+
+  sessoes.forEach(s => {
+    const div = document.createElement("div");
+    div.className = "sessao-item";
+    div.innerHTML = `
+      <strong>${s.cliente}</strong>
+      ${s.data} ${s.hora} - ${s.tipo}
+      <button onclick="editar(${s.id})">✏️</button>
+      <button onclick="gerarPDF(${s.id})">📄 PDF</button>
+      <button onclick="excluir(${s.id})">🗑️</button>
+    `;
+    lista.appendChild(div);
+  });
+}
+
+function gerarPDF(id) {
+  window.open(
+    `http://localhost:3000/api/sessoes/${id}/pdf`,
+    "_blank"
+  );
+}
+

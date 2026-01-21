@@ -26,3 +26,14 @@ await db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_sessao_unica
   ON sessoes (cliente, data, hora)
 `);
+
+// ⚡ Índices para performance de busca
+await db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_sessoes_data
+  ON sessoes (data)
+`);
+
+await db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_sessoes_cliente
+  ON sessoes (cliente)
+`);
