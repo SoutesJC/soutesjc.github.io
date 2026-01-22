@@ -21,6 +21,17 @@ await db.exec(`
   )
 `);
 
+await db.exec(`
+  CREATE TABLE IF NOT EXISTS usuarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    senha_hash TEXT NOT NULL,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+
 // 🔐 Impede duplicatas lógicas
 await db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_sessao_unica

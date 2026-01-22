@@ -65,7 +65,14 @@ let horaOriginal = null;
 
 async function salvarSessao() {
 
-  // 🚨 ALERTA SOMENTE EM EDIÇÃO
+  if (!usuarioLogado()) {
+    alert("Faça login para salvar sessões.");
+    return;
+  }
+  
+  const token = localStorage.getItem("token");
+  
+  // SOMENTE EM EDIÇÃO
   if (sessaoEditandoId !== null && hora.value === horaOriginal) {
     alert("Para atualizar a sessão, altere o horário.");
     return;
@@ -74,7 +81,10 @@ async function salvarSessao() {
   // daqui pra baixo continua seu fluxo normal
   await fetch("http://localhost:3000/api/sessoes", {
     method: "POST", // ou PUT futuramente
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
     body: JSON.stringify({
       cliente: cliente.value,
       data: data.value,

@@ -15,13 +15,41 @@
 
 <nav class="menu">
   <button onclick="mostrarTela('cadastro'); novaSessao();">➕ Nova Sessão</button>
-  <button onclick="mostrarTela('historico'); carregarHistorico();"> 📚 Histórico </button>
+  <button onclick="mostrarTela('historico'); carregarHistorico();">📚 Histórico</button>
 
+  <!-- Área de login dinâmica -->
+  <div class="right-actions" id="authArea"></div>
 </nav>
 
 <main>
 
-<!-- ================= CADASTRO ================= -->
+<!-- ================= MODAL LOGIN ================= -->
+<div id="loginModal" class="modal hidden">
+  <div class="modal-content">
+
+    <h2 id="loginTitulo">Entrar</h2>
+      <input type="text" id="loginNome" placeholder="Nome" class="hidden" />
+      <input type="email" id="loginEmail" placeholder="Email" />
+      <input type="password" id="loginSenha" placeholder="Senha" />
+
+    <div class="buttons">
+      <button id="btnLogin" onclick="login()">Login</button>
+      <button id="btnCadastrar" class="hidden" onclick="cadastrar()">Cadastrar</button>
+      <button onclick="fecharLoginModal()">Cancelar</button>
+    </div>
+
+    <p class="troca-auth">
+      <span id="textoTroca">Não tem conta?</span>
+      <a href="#" onclick="alternarAuth()">Criar conta</a>
+    </p>
+
+    <p id="erroLogin" class="erro"></p>
+
+  </div>
+</div>
+
+
+<!-- ================= CADASTRO SESSÃO ================= -->
 <section id="tela-cadastro" class="tela">
   <h2>Cadastro de Sessão</h2>
 
@@ -33,14 +61,10 @@
   </div>
 
   <div class="card">
-  <h3>Gerar nota a partir de áudio</h3>
-
-  <input type="file" id="audioFile" accept="audio/*">
-
-  <button onclick="gerarNotaPorAudio()">
-    🎧 Gerar Nota pelo Áudio
-  </button>
-</div>
+    <h3>Gerar nota a partir de áudio</h3>
+    <input type="file" id="audioFile" accept="audio/*">
+    <button onclick="gerarNotaPorAudio()">🎧 Gerar Nota pelo Áudio</button>
+  </div>
 
   <textarea id="transcricao" placeholder="Transcrição"></textarea>
   <textarea id="nota" placeholder="Nota gerada"></textarea>
@@ -55,16 +79,19 @@
   <h2>Histórico de Sessões</h2>
 
   <input
-  type="text"
-  id="buscaHistorico"
-  placeholder="Buscar por cliente ou data (YYYY-MM-DD)"
-  oninput="buscarHistorico()"
-/>
+    type="text"
+    id="buscaHistorico"
+    placeholder="Buscar por cliente ou data (YYYY-MM-DD)"
+    oninput="buscarHistorico()"
+  />
+
   <div id="listaSessoes"></div>
 </section>
 
 </main>
 
+<!-- Scripts -->
+<script src="js/login.js"></script>
 <script src="js/app.js"></script>
 <script src="js/sessao.js"></script>
 <script src="js/historico.js"></script>

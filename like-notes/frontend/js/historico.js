@@ -6,9 +6,19 @@ window.excluir = excluir;
 
 
 async function carregarHistorico() {
-  const res = await fetch("http://localhost:3000/api/sessoes");
-  const sessoes = await res.json();
 
+   if (!usuarioLogado()) {
+    alert("Faça login para acessar o histórico.");
+    return;
+  }
+
+  const res = await fetch("http://localhost:3000/api/sessoes", {
+  headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`
+    }
+  });
+
+  const sessoes = await res.json(); 
   renderizarHistorico(sessoes);
 }
 

@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import PDFDocument from "pdfkit";
 import OpenAI from "openai";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { db } from "./database.js";
 import multer from "multer";
 import fs from "fs";
@@ -160,7 +162,7 @@ ${texto}
 =========================== */
 
 // CREATE
-app.post("/api/sessoes", async (req, res) => {
+app.post("/api/sessoes",auth, async (req, res) => {
   const { cliente, data, hora, tipo, transcricao, nota } = req.body;
 
   try {
@@ -182,7 +184,7 @@ app.post("/api/sessoes", async (req, res) => {
 });
 
 // READ ALL
-app.get("/api/sessoes", async (req, res) => {
+app.get("/api/sessoes",auth, async (req, res) => {
   const sessoes = await db.all(
     `SELECT id, cliente, data, hora, tipo
      FROM sessoes
@@ -192,7 +194,7 @@ app.get("/api/sessoes", async (req, res) => {
 });
 
 // SEARCH (nome OU data)
-app.get("/api/sessoes/busca", async (req, res) => {
+app.get("/api/sessoes/busca",auth, async (req, res) => {
   const { q } = req.query;
 
   if (!q) {
@@ -260,7 +262,7 @@ app.get("/api/sessoes/busca", async (req, res) => {
 
 
 // READ ONE
-app.get("/api/sessoes/:id", async (req, res) => {
+app.get("/api/sessoes/:id", auth, async (req, res) => {
   const sessao = await db.get(
     `SELECT * FROM sessoes WHERE id = ?`,
     [req.params.id]
@@ -274,7 +276,7 @@ app.get("/api/sessoes/:id", async (req, res) => {
 });
 
 // UPDATE
-app.put("/api/sessoes/:id", async (req, res) => {
+app.put("/api/sessoes/:id", auth, async (req, res) => {
   const { cliente, data, hora, tipo, transcricao, nota } = req.body;
 
   await db.run(
@@ -288,17 +290,113 @@ app.put("/api/sessoes/:id", async (req, res) => {
 });
 
 // DELETE
-app.delete("/api/sessoes/:id", async (req, res) => {
+app.delete("/api/sessoes/:id", auth, async (req, res) => {
   await db.run(`DELETE FROM sessoes WHERE id = ?`, [req.params.id]);
   res.json({ ok: true });
 });
 
 
 /* ===========================
+   LOGIN E CADASTRO DE USUÁRIO
+=========================== */
+
+// CADASTRO
+app.post("/api/registro", async (req, res) => {
+  const { nome, email, senha } = req.body;
+
+  if (!nome || !email || !senha) {
+    return res.status(400).json({ erro: "Dados incompletos" });
+  }
+
+  try {
+    const senha_hash = await bcrypt.hash(senha, 10);
+
+    await db.run(
+      `INSERT INTO usuarios (nome, email, senha_hash)
+       VALUES (?, ?, ?)`,
+      [nome, email, senha_hash]
+    );
+
+    res.json({ ok: true });
+
+  } catch (err) {
+    if (err.code === "SQLITE_CONSTRAINT") {
+      return res.status(409).json({ erro: "Email já cadastrado" });
+    }
+    console.error(err);
+    res.status(500).json({ erro: "Erro ao registrar usuário" });
+  }
+});
+
+// LOGIN
+app.post("/api/login", async (req, res) => {
+  const { email, senha } = req.body;
+
+  if (!email || !senha) {
+    return res.status(400).json({ erro: "Dados incompletos" });
+  }
+
+  const usuario = await db.get(
+    `SELECT * FROM usuarios WHERE email = ?`,
+    [email]
+  );
+
+  if (!usuario) {
+    return res.status(401).json({ erro: "Usuário não encontrado" });
+  }
+
+  const senhaOk = await bcrypt.compare(senha, usuario.senha_hash);
+
+  if (!senhaOk) {
+    return res.status(401).json({ erro: "Senha incorreta" });
+  }
+
+  const token = jwt.sign(
+    { id: usuario.id, email: usuario.email },
+    process.env.JWT_SECRET,
+    { expiresIn: "8h" }
+  );
+
+  res.json({
+    token,
+    usuario: {
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email
+    }
+  });
+});
+
+
+
+// MIDDLEWARE DE AUTENTICAÇÃO
+function auth(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ erro: "Não autenticado" });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // deixa disponível para futuras melhorias
+    req.usuario = decoded;
+
+    next();
+  } catch (err) {
+    return res.status(401).json({ erro: "Token inválido ou expirado" });
+  }
+}
+
+
+/* ===========================
    GERAR PDF
 =========================== */
 
-app.get("/api/sessoes/:id/pdf", async (req, res) => {
+app.get("/api/sessoes/:id/pdf", auth, async (req, res) => {
   try {
     const { id } = req.params;
 
