@@ -9,11 +9,15 @@ async function gerarNota() {
 
   nota.value = "Gerando nota...";
 
-  const res = await fetch("http://localhost:3000/api/gerar-nota", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(dados)
-  });
+await fetch(`${API_URL}/api/sessoes`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${localStorage.getItem("token")}`
+  },
+  body: JSON.stringify({dados})
+});
+
 
   const json = await res.json();
   nota.value = json.nota;
@@ -67,6 +71,7 @@ async function salvarSessao() {
 
   if (!usuarioLogado()) {
     alert("Faça login para salvar sessões.");
+    mostrarTela('cadastro');
     return;
   }
   
@@ -79,7 +84,7 @@ async function salvarSessao() {
   }
 
   // daqui pra baixo continua seu fluxo normal
-  await fetch("http://localhost:3000/api/sessoes", {
+  await fetch(`${API_URL}/api/sessoes`, {
     method: "POST", // ou PUT futuramente
     headers: {
       "Content-Type": "application/json",

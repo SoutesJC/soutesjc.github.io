@@ -46,7 +46,11 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
+
 
 /* ===========================
    GERAR NOTA (TEXTO)
@@ -120,16 +124,16 @@ app.post(
 
       /* ===== GERAÇÃO DA NOTA ===== */
       const prompt = `
-Gere uma nota profissional clara e objetiva baseada nesta sessão:
+        Gere uma nota profissional clara e objetiva baseada nesta sessão:
 
-Cliente: ${cliente}
-Data: ${data}
-Hora: ${hora}
-Tipo: ${tipo}
+        Cliente: ${cliente}
+        Data: ${data}
+        Hora: ${hora}
+        Tipo: ${tipo}
 
-Transcrição:
-${texto}
-`;
+        Transcrição:
+        ${texto}
+        `;
 
       const resposta = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -162,40 +166,46 @@ ${texto}
 =========================== */
 
 // CREATE
-app.post("/api/sessoes",auth, async (req, res) => {
+app.post("/api/sessoes", auth, async (req, res) => {
   const { cliente, data, hora, tipo, transcricao, nota } = req.body;
+  const usuario_id = req.user.id;
 
   try {
     const result = await db.run(
-      `INSERT INTO sessoes (cliente, data, hora, tipo, transcricao, nota)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [cliente, data, hora, tipo, transcricao, nota]
+      `INSERT INTO sessoes
+       (usuario_id, cliente, data, hora, tipo, transcricao, nota)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [usuario_id, cliente, data, hora, tipo, transcricao, nota]
     );
 
     res.json({ id: result.lastID });
 
   } catch (err) {
-    if (err.code === "SQLITE_CONSTRAINT") {
-      return res.status(409).json({ erro: "Sessão já existe" });
-    }
     console.error(err);
     res.status(500).json({ erro: "Erro ao salvar sessão" });
   }
 });
 
+
 // READ ALL
-app.get("/api/sessoes",auth, async (req, res) => {
+app.get("/api/sessoes", auth, async (req, res) => {
+  const usuario_id = req.user.id;
+
   const sessoes = await db.all(
     `SELECT id, cliente, data, hora, tipo
      FROM sessoes
-     ORDER BY criado_em DESC`
+     WHERE usuario_id = ?
+     ORDER BY criado_em DESC`,
+    [usuario_id]
   );
+
   res.json(sessoes);
 });
 
 // SEARCH (nome OU data)
-app.get("/api/sessoes/busca",auth, async (req, res) => {
+app.get("/api/sessoes/busca", auth, async (req, res) => {
   const { q } = req.query;
+  const usuario_id = req.user.id;
 
   if (!q) {
     return res.status(400).json({ erro: "Parâmetro de busca vazio" });
@@ -204,50 +214,48 @@ app.get("/api/sessoes/busca",auth, async (req, res) => {
   try {
     let resultados;
 
-    // YYYY-MM-DD (data exata)
+    // Data exata
     if (/^\d{4}-\d{2}-\d{2}$/.test(q)) {
       resultados = await db.all(
         `SELECT id, cliente, data, hora, tipo
          FROM sessoes
-         WHERE data = ?
+         WHERE usuario_id = ? AND data = ?
          ORDER BY criado_em DESC`,
-        [q]
+        [usuario_id, q]
       );
 
-    // YYYY (ano)
+    // Ano
     } else if (/^\d{4}$/.test(q)) {
-      const inicio = `${q}-01-01`;
-      const fim = `${q}-12-31`;
-
       resultados = await db.all(
         `SELECT id, cliente, data, hora, tipo
          FROM sessoes
-         WHERE data BETWEEN ? AND ?
+         WHERE usuario_id = ?
+           AND data BETWEEN ? AND ?
          ORDER BY criado_em DESC`,
-        [inicio, fim]
+        [usuario_id, `${q}-01-01`, `${q}-12-31`]
       );
 
-    // MM (mês)
+    // Mês
     } else if (/^\d{2}$/.test(q)) {
       resultados = await db.all(
         `SELECT id, cliente, data, hora, tipo
          FROM sessoes
-         WHERE substr(data, 6, 2) = ?
+         WHERE usuario_id = ?
+           AND substr(data, 6, 2) = ?
          ORDER BY criado_em DESC`,
-        [q]
+        [usuario_id, q]
       );
 
     // Nome (prefixo indexável)
     } else {
-      const inicio = q;
-      const fim = q + '\uffff';
-
       resultados = await db.all(
         `SELECT id, cliente, data, hora, tipo
          FROM sessoes
-         WHERE cliente >= ? AND cliente < ?
+         WHERE usuario_id = ?
+           AND cliente >= ?
+           AND cliente < ?
          ORDER BY criado_em DESC`,
-        [inicio, fim]
+        [usuario_id, q, q + '\uffff']
       );
     }
 
@@ -263,9 +271,13 @@ app.get("/api/sessoes/busca",auth, async (req, res) => {
 
 // READ ONE
 app.get("/api/sessoes/:id", auth, async (req, res) => {
+  const usuario_id = req.user.id;
+
   const sessao = await db.get(
-    `SELECT * FROM sessoes WHERE id = ?`,
-    [req.params.id]
+    `SELECT *
+     FROM sessoes
+     WHERE id = ? AND usuario_id = ?`,
+    [req.params.id, usuario_id]
   );
 
   if (!sessao) {
@@ -277,21 +289,38 @@ app.get("/api/sessoes/:id", auth, async (req, res) => {
 
 // UPDATE
 app.put("/api/sessoes/:id", auth, async (req, res) => {
+  const usuario_id = req.user.id;
   const { cliente, data, hora, tipo, transcricao, nota } = req.body;
 
-  await db.run(
+  const result = await db.run(
     `UPDATE sessoes
-     SET cliente = ?, data = ?, hora = ?, tipo = ?, transcricao = ?, nota = ?
-     WHERE id = ?`,
-    [cliente, data, hora, tipo, transcricao, nota, req.params.id]
+     SET cliente=?, data=?, hora=?, tipo=?, transcricao=?, nota=?
+     WHERE id=? AND usuario_id=?`,
+    [cliente, data, hora, tipo, transcricao, nota, req.params.id, usuario_id]
   );
+
+  if (result.changes === 0) {
+    return res.status(404).json({ erro: "Sessão não encontrada" });
+  }
 
   res.json({ ok: true });
 });
 
+
 // DELETE
 app.delete("/api/sessoes/:id", auth, async (req, res) => {
-  await db.run(`DELETE FROM sessoes WHERE id = ?`, [req.params.id]);
+  const usuario_id = req.user.id;
+
+  const result = await db.run(
+    `DELETE FROM sessoes
+     WHERE id = ? AND usuario_id = ?`,
+    [req.params.id, usuario_id]
+  );
+
+  if (result.changes === 0) {
+    return res.status(404).json({ erro: "Sessão não encontrada" });
+  }
+
   res.json({ ok: true });
 });
 
@@ -377,20 +406,20 @@ function auth(req, res, next) {
     return res.status(401).json({ erro: "Não autenticado" });
   }
 
-  const token = authHeader.replace("Bearer ", "");
+  const [type, token] = authHeader.split(" ");
+
+  if (type !== "Bearer" || !token) {
+    return res.status(401).json({ erro: "Token malformado" });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // deixa disponível para futuras melhorias
-    req.usuario = decoded;
-
+    req.user = decoded;
     next();
-  } catch (err) {
-    return res.status(401).json({ erro: "Token inválido ou expirado" });
+  } catch {
+    return res.status(401).json({ erro: "Token inválido" });
   }
 }
-
 
 /* ===========================
    GERAR PDF

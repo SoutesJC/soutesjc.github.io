@@ -1,3 +1,8 @@
+const API_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:3000"
+    : "https://SEU_BACKEND_NO_RENDER.onrender.com";
+
 function mostrarTela(tela) {
   document.getElementById("tela-cadastro").classList.add("hidden");
   document.getElementById("tela-historico").classList.add("hidden");
@@ -39,3 +44,5 @@ function novaSessao() {
   horaOriginal = null;
 
 }
+
+

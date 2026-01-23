@@ -9,10 +9,11 @@ async function carregarHistorico() {
 
    if (!usuarioLogado()) {
     alert("Faça login para acessar o histórico.");
+    mostrarTela("cadastro");
     return;
   }
 
-  const res = await fetch("http://localhost:3000/api/sessoes", {
+  const res = await fetch(`${API_URL}/api/sessoes`, {
   headers: {
       Authorization: `Bearer ${localStorage.getItem("token")}`
     }
@@ -24,7 +25,7 @@ async function carregarHistorico() {
 
 
 async function editar(id) {
-  const res = await fetch(`http://localhost:3000/api/sessoes/${id}`);
+  const res = await fetch(`${API_URL}/api/sessoes/${id}`);
   const s = await res.json();
 
     sessaoEditandoId = id;
@@ -43,7 +44,7 @@ async function editar(id) {
 async function excluir(id) {
   if (!confirm("Excluir sessão?")) return;
 
-  await fetch(`http://localhost:3000/api/sessoes/${id}`, {
+  await fetch(`${API_URL}/api/sessoes/${id}`, {
     method: "DELETE"
   });
 
@@ -64,7 +65,7 @@ async function buscarHistorico() {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/api/sessoes/busca?q=${encodeURIComponent(q)}`
+        `${API_URL}/api/sessoes/busca?q=${encodeURIComponent(q)}`
       );
 
       const resultados = await res.json();

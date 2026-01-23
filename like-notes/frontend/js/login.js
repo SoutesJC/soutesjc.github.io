@@ -73,7 +73,7 @@ async function login() {
   const email = document.getElementById("loginEmail").value;
   const senha = document.getElementById("loginSenha").value;
 
-  const res = await fetch("http://localhost:3000/api/login", {
+  const res = await fetch(`${API_URL}/api/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, senha })
@@ -108,7 +108,7 @@ async function cadastrar() {
   }
 
   try {
-    const res = await fetch("http://localhost:3000/api/registro", {
+    const res = await fetch(`${API_URL}/api/registro`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nome, email, senha })
@@ -144,6 +144,7 @@ function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("usuario");
   renderAuthArea();
+  mostrarTela('cadastro');
 }
 
 // ===============================

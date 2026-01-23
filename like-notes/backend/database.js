@@ -7,20 +7,9 @@ export const db = await open({
   driver: sqlite3.Database
 });
 
-// Cria tabela
-await db.exec(`
-  CREATE TABLE IF NOT EXISTS sessoes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    cliente TEXT NOT NULL,
-    data TEXT NOT NULL,
-    hora TEXT NOT NULL,
-    tipo TEXT,
-    transcricao TEXT,
-    nota TEXT,
-    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
-
+// ===============================
+// TABELA DE USUÁRIOS (PRIMEIRO)
+// ===============================
 await db.exec(`
   CREATE TABLE IF NOT EXISTS usuarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,23 +17,44 @@ await db.exec(`
     email TEXT NOT NULL UNIQUE,
     senha_hash TEXT NOT NULL,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
+  );
 `);
 
+// ===============================
+// TABELA DE SESSÕES
+// ===============================
+await db.exec(`
+  CREATE TABLE IF NOT EXISTS sessoes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL,
+    cliente TEXT NOT NULL,
+    data TEXT NOT NULL,
+    hora TEXT NOT NULL,
+    tipo TEXT,
+    transcricao TEXT,
+    nota TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+  );
+`);
 
-// 🔐 Impede duplicatas lógicas
+// ===============================
+// ÍNDICES
+// ===============================
+
+// 🔐 Impede duplicatas lógicas por usuário
 await db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_sessao_unica
-  ON sessoes (cliente, data, hora)
+  ON sessoes (usuario_id, cliente, data, hora);
 `);
 
-// ⚡ Índices para performance de busca
+// ⚡ Performance
 await db.exec(`
   CREATE INDEX IF NOT EXISTS idx_sessoes_data
-  ON sessoes (data)
+  ON sessoes (data);
 `);
 
 await db.exec(`
   CREATE INDEX IF NOT EXISTS idx_sessoes_cliente
-  ON sessoes (cliente)
+  ON sessoes (cliente);
 `);
