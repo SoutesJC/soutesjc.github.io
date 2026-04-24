@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Associação Rápida — Mobile</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #09090f;
+    --surface:   #12121e;
+    --border:    #1e1e30;
+    --accent:    #00e5a0;
+    --accent2:   #7b5ef8;
+    --warn:      #ff5f5f;
+    --text:      #e8e8f4;
+    --muted:     #6a6a90;
+    --easy:      #00e5a0;
+    --medium:    #f0b429;
+    --hard:      #ff5f5f;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 60% 20%, rgba(123,94,248,.12) 0%, transparent 55%),
+                radial-gradient(ellipse at 20% 80%, rgba(0,229,160,.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    width: min(640px, 95vw);
+    padding: 16px 0;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding: 0 4px;
+  }
+  .logo {
+    font-family: 'Syne Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .12em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .score-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    gap: 16px;
+  }
+  .score-pill span { color: var(--muted); font-size: 11px; }
+  #score-val { color: var(--accent); }
+  #streak-val { color: var(--accent2); }
+
+  /* ── SCREEN BASE ── */
+  .screen {
+    display: none;
+    animation: fadeUp .35s ease forwards;
+  }
+  .screen.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── START SCREEN ── */
+  .start-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 40px;
+    text-align: center;
+  }
+  .start-card h1 {
+    font-size: clamp(28px, 6vw, 42px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  .start-card h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .start-card p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 400px;
+    margin: 0 auto 36px;
+  }
+  .diff-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .diff-card {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 12px;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .diff-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .diff-card.easy::before  { background: radial-gradient(circle at 50% 0%, rgba(0,229,160,.15), transparent 70%); }
+  .diff-card.medium::before{ background: radial-gradient(circle at 50% 0%, rgba(240,180,41,.15), transparent 70%); }
+  .diff-card.hard::before  { background: radial-gradient(circle at 50% 0%, rgba(255,95,95,.15), transparent 70%); }
+  .diff-card:hover::before { opacity: 1; }
+  .diff-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+  .diff-card.easy:hover  { border-color: var(--easy); }
+  .diff-card.medium:hover{ border-color: var(--medium); }
+  .diff-card.hard:hover  { border-color: var(--hard); }
+  .diff-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin: 0 auto 12px;
+  }
+  .diff-card.easy   .diff-dot { background: var(--easy); box-shadow: 0 0 8px var(--easy); }
+  .diff-card.medium .diff-dot { background: var(--medium); box-shadow: 0 0 8px var(--medium); }
+  .diff-card.hard   .diff-dot { background: var(--hard); box-shadow: 0 0 8px var(--hard); }
+  .diff-card h3 { font-size: 13px; font-weight: 700; letter-spacing: .05em; margin-bottom: 6px; }
+  .diff-card p  { font-size: 11px; color: var(--muted); margin: 0; line-height: 1.5; }
+
+  .topics {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .topic-badge {
+    background: var(--border);
+    border-radius: 99px;
+    padding: 5px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    color: var(--muted);
+  }
+
+  /* ── GAME SCREEN ── */
+  .game-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .diff-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 99px;
+    border: 1px solid;
+  }
+  .diff-badge.easy   { color: var(--easy);   border-color: var(--easy);   background: rgba(0,229,160,.08); }
+  .diff-badge.medium { color: var(--medium); border-color: var(--medium); background: rgba(240,180,41,.08); }
+  .diff-badge.hard   { color: var(--hard);   border-color: var(--hard);   background: rgba(255,95,95,.08); }
+
+  .q-counter { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .q-counter b { color: var(--text); }
+
+  /* TIMER */
+  .timer-wrap {
+    position: relative;
+    width: 72px; height: 72px;
+    margin: 0 auto 20px;
+  }
+  .timer-wrap svg { transform: rotate(-90deg); }
+  .timer-track { fill: none; stroke: var(--border); stroke-width: 5; }
+  .timer-arc   { fill: none; stroke-width: 5; stroke-linecap: round;
+                 transition: stroke-dashoffset .25s linear, stroke .5s; }
+  .timer-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  /* QUESTION CARD */
+  .q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 32px 28px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .q-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+  }
+  .q-topic {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .q-topic::before { content: '◈'; }
+  .q-text {
+    font-size: clamp(17px, 3.5vw, 22px);
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  .q-text em {
+    font-style: normal;
+    color: var(--accent);
+    background: rgba(0,229,160,.1);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  /* OPTIONS */
+  .options-grid {
+    display: grid;
+    gap: 10px;
+  }
+  .opt-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    text-align: left;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .18s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .opt-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(123,94,248,.1), transparent);
+    opacity: 0;
+    transition: opacity .18s;
+  }
+  .opt-btn:hover:not(:disabled)::before { opacity: 1; }
+  .opt-btn:hover:not(:disabled) {
+    border-color: var(--accent2);
+    transform: translateX(4px);
+  }
+  .opt-letter {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all .18s;
+  }
+  .opt-btn:hover:not(:disabled) .opt-letter {
+    background: var(--accent2);
+    color: var(--bg);
+  }
+  .opt-btn.correct {
+    border-color: var(--easy);
+    background: rgba(0,229,160,.08);
+    animation: pulseCorrect .4s ease;
+  }
+  .opt-btn.correct .opt-letter { background: var(--easy); color: var(--bg); }
+  .opt-btn.wrong {
+    border-color: var(--warn);
+    background: rgba(255,95,95,.08);
+    animation: shakeWrong .4s ease;
+  }
+  .opt-btn.wrong .opt-letter { background: var(--warn); color: var(--bg); }
+  .opt-btn:disabled { cursor: not-allowed; opacity: .6; }
+  .opt-btn.correct, .opt-btn.wrong { opacity: 1 !important; }
+
+  @keyframes pulseCorrect {
+    0%,100% { transform: scale(1); }
+    50%      { transform: scale(1.02); }
+  }
+  @keyframes shakeWrong {
+    0%,100% { transform: translateX(0); }
+    25%     { transform: translateX(-6px); }
+    75%     { transform: translateX(6px); }
+  }
+
+  /* FEEDBACK */
+  .feedback {
+    margin-top: 14px;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+  .feedback.show { display: flex; animation: fadeUp .25s ease; }
+  .feedback.ok  { background: rgba(0,229,160,.1);  border: 1px solid rgba(0,229,160,.3);  color: var(--easy); }
+  .feedback.err { background: rgba(255,95,95,.1);  border: 1px solid rgba(255,95,95,.3);  color: var(--warn); }
+  .feedback.time{ background: rgba(240,180,41,.1); border: 1px solid rgba(240,180,41,.3); color: var(--medium); }
+
+  /* ── RESULT SCREEN ── */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 36px;
+    text-align: center;
+  }
+  .result-icon { font-size: 52px; margin-bottom: 16px; }
+  .result-title { font-size: 28px; font-weight: 800; margin-bottom: 6px; }
+  .result-sub   { color: var(--muted); font-size: 13px; margin-bottom: 32px; line-height: 1.6; }
+  .result-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .stat-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 10px;
+  }
+  .stat-box .val { font-size: 28px; font-weight: 800; color: var(--accent); }
+  .stat-box .lbl { font-size: 10px; color: var(--muted); letter-spacing: .08em; margin-top: 4px; }
+  .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  /* BUTTONS */
+  .btn {
+    border: none;
+    border-radius: 12px;
+    padding: 14px 28px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .18s;
+    letter-spacing: .03em;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,229,160,.35); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1.5px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--accent2); color: var(--text); }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 99px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 99px;
+    transition: width .3s ease;
+  }
+
+  /* PULSE DOT for timer warning */
+  @keyframes timerBlink {
+    0%,100% { opacity:1; } 50% { opacity:.3; }
+  }
+  .timer-num.danger { color: var(--warn); animation: timerBlink .5s infinite; }
+
+  /* timeout animation */
+  @keyframes timeoutFlash {
+    0%,100% { border-color: var(--border); }
+    50%     { border-color: var(--warn); box-shadow: 0 0 20px rgba(255,95,95,.3); }
+  }
+  .q-card.timeout { animation: timeoutFlash .4s ease; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div class="logo">⬡ ASSOC. RÁPIDA</div>
+    <div class="score-pill">
+      <div><span>PONTOS</span><br><b id="score-val">0</b></div>
+      <div><span>SEQUÊNCIA</span><br><b id="streak-val">0🔥</b></div>
+    </div>
+  </div>
+
+  <!-- START -->
+  <div class="screen active" id="screen-start">
+    <div class="start-card">
+      <h1>Associação<br><em>Rápida</em></h1>
+      <p>Escolha a opção que melhor se associa ao conceito apresentado — antes que o tempo acabe!</p>
+      <div class="diff-grid">
+        <div class="diff-card easy" onclick="startGame('easy')">
+          <div class="diff-dot"></div>
+          <h3>FÁCIL</h3>
+          <p>2 opções<br>10 segundos</p>
+        </div>
+        <div class="diff-card medium" onclick="startGame('medium')">
+          <div class="diff-dot"></div>
+          <h3>MÉDIO</h3>
+          <p>3 opções<br>13 segundos</p>
+        </div>
+        <div class="diff-card hard" onclick="startGame('hard')">
+          <div class="diff-dot"></div>
+          <h3>DIFÍCIL</h3>
+          <p>4 opções<br>16 segundos</p>
+        </div>
+      </div>
+      <div class="topics">
+        <span class="topic-badge">Arquitetura Mobile</span>
+        <span class="topic-badge">Governança Mobile</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="screen-game">
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+    <div class="game-meta">
+      <div class="diff-badge" id="diff-badge">FÁCIL</div>
+      <div class="q-counter">Questão <b id="q-num">1</b> de <b id="q-total">10</b></div>
+    </div>
+
+    <div class="timer-wrap">
+      <svg width="72" height="72" viewBox="0 0 72 72">
+        <circle class="timer-track" cx="36" cy="36" r="31"/>
+        <circle class="timer-arc"   cx="36" cy="36" r="31" id="timer-arc"
+                stroke-dasharray="194.78" stroke-dashoffset="0" stroke="var(--accent)"/>
+      </svg>
+      <div class="timer-num" id="timer-num">10</div>
+    </div>
+
+    <div class="q-card" id="q-card">
+      <div class="q-topic" id="q-topic">Arquitetura Mobile</div>
+      <div class="q-text"  id="q-text">Carregando...</div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="screen" id="screen-result">
+    <div class="result-card">
+      <div class="result-icon" id="result-icon">🏆</div>
+      <div class="result-title" id="result-title">Parabéns!</div>
+      <div class="result-sub"   id="result-sub">Você completou o desafio.</div>
+      <div class="result-stats">
+        <div class="stat-box"><div class="val" id="r-score">0</div><div class="lbl">PONTOS</div></div>
+        <div class="stat-box"><div class="val" id="r-correct">0</div><div class="lbl">ACERTOS</div></div>
+        <div class="stat-box"><div class="val" id="r-streak">0</div><div class="lbl">SEQUÊNCIA</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startGame(currentDiff)">Jogar Novamente</button>
+        <button class="btn btn-ghost"   onclick="goHome()">Trocar Dificuldade</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── QUESTION BANK ──────────────────────────────────────────────
+const questions = {
+  easy: [
+    {
+      topic: "Arquitetura Mobile",
+      text: "O que significa a abordagem <em>offline-first</em>?",
+      options: [
+        { text: "O app funciona sem internet e sincroniza depois", correct: true },
+        { text: "O app sempre exige conexão ativa para funcionar", correct: false }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "O que é o <em>backend</em> em um app de delivery?",
+      options: [
+        { text: "A tela e os botões que o usuário toca no celular", correct: false },
+        { text: "A parte que processa regras de negócio e dados", correct: true }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "O que é um <em>trade-off</em> em arquitetura?",
+      options: [
+        { text: "Uma escolha em que ganhos vêm acompanhados de custos", correct: true },
+        { text: "Uma solução perfeita que elimina todos os problemas", correct: false }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "O que significa dizer que <em>não existe bala de prata</em>?",
+      options: [
+        { text: "Não existe uma solução única que resolva tudo", correct: true },
+        { text: "Toda arquitetura é igualmente ruim", correct: false }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "O que é o <em>cliente</em> em um sistema mobile?",
+      options: [
+        { text: "A interface que o usuário vê e toca no celular", correct: true },
+        { text: "O servidor que armazena e processa os dados", correct: false }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "O que é <em>governança</em> em apps móveis?",
+      options: [
+        { text: "Práticas que garantem alinhamento, segurança e sustentabilidade", correct: true },
+        { text: "A linguagem de programação usada para desenvolver o app", correct: false }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "Por que <em>segurança</em> não é funcionalidade adicional?",
+      options: [
+        { text: "Porque é um requisito não funcional crítico desde o início", correct: true },
+        { text: "Porque pode ser adicionada ao app depois do lançamento", correct: false }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "Arquitetura é decidida <em>quando</em> no desenvolvimento?",
+      options: [
+        { text: "Antes de começar a programar", correct: true },
+        { text: "Após o primeiro release do app", correct: false }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "Apps que ignoram governança tendem a ficar…",
+      options: [
+        { text: "Insustentáveis a médio prazo", correct: true },
+        { text: "Mais rápidos e eficientes com o tempo", correct: false }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "A <em>nuvem</em> em arquitetura mobile representa…",
+      options: [
+        { text: "A infraestrutura que mantém serviços disponíveis e escaláveis", correct: true },
+        { text: "O banco de dados local armazenado no celular do usuário", correct: false }
+      ]
+    }
+  ],
+  medium: [
+    {
+      topic: "Arquitetura Mobile",
+      text: "Quando usar <em>online-first</em>?",
+      options: [
+        { text: "Quando o usuário opera em regiões com sinal instável", correct: false },
+        { text: "Quando os dados precisam estar sempre atualizados", correct: true },
+        { text: "Quando o app precisa funcionar mesmo sem conexão", correct: false }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "Qual é um exemplo de <em>métrica técnica</em>?",
+      options: [
+        { text: "Custo de aquisição de usuário (CAC)", correct: false },
+        { text: "Taxa de retenção de usuários no app", correct: false },
+        { text: "Taxa de crashes e tempo médio de resposta", correct: true }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "O que é <em>dívida técnica</em>?",
+      options: [
+        { text: "O custo financeiro de manter servidores na nuvem", correct: false },
+        { text: "Atalhos e decisões rápidas que precisarão ser corrigidos", correct: true },
+        { text: "O tempo gasto para onboarding de novos usuários", correct: false }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "Qual é um vetor de risco de <em>segurança</em> mobile?",
+      options: [
+        { text: "Tempo médio de sessão do usuário no app", correct: false },
+        { text: "Armazenamento inseguro de dados sensíveis", correct: true },
+        { text: "Engajamento baixo por funcionalidade", correct: false }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "Por que mobile exige <em>cuidado especial</em>?",
+      options: [
+        { text: "Porque funciona em ambiente estável com conexão garantida", correct: false },
+        { text: "Porque tem bateria limitada, internet instável e telas variadas", correct: true },
+        { text: "Porque o código mobile é muito mais simples de escrever", correct: false }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "<em>Conformidade</em> em governança mobile envolve…",
+      options: [
+        { text: "Apenas garantir que o app tenha boa nota nas lojas", correct: false },
+        { text: "Adequação às legislações de proteção de dados vigentes", correct: true },
+        { text: "Manter o mesmo visual em todas as versões do app", correct: false }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "Um app de <em>agente de campo</em> sem sinal constante deve usar…",
+      options: [
+        { text: "Online-first com cache agressivo no servidor", correct: false },
+        { text: "Offline-first com sincronização posterior", correct: true },
+        { text: "Bloquear o uso até que o sinal seja restaurado", correct: false }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "O que é <em>planejamento de refatoração</em>?",
+      options: [
+        { text: "Lançar novas versões sem testes de compatibilidade", correct: false },
+        { text: "Reservar ciclos para melhorar o código sem mudar comportamento externo", correct: true },
+        { text: "Descontinuar o app e criar um novo do zero", correct: false }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "No fluxo básico, quem <em>executa as regras de negócio</em>?",
+      options: [
+        { text: "O cliente (interface no celular)", correct: false },
+        { text: "A tela de exibição do resultado", correct: false },
+        { text: "O backend do sistema", correct: true }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "Qual ação garante <em>longevidade</em> ao sistema mobile?",
+      options: [
+        { text: "Adicionar novas features sem corrigir bugs antigos", correct: false },
+        { text: "Proteger, medir, evoluir e governar continuamente", correct: true },
+        { text: "Manter versões antigas para todos os usuários sempre", correct: false }
+      ]
+    }
+  ],
+  hard: [
+    {
+      topic: "Arquitetura Mobile",
+      text: "Como resolver um <em>conflito de sincronização</em> em offline-first?",
+      options: [
+        { text: "Ignorar sempre a versão mais antiga automaticamente", correct: false },
+        { text: "Decidir pela última alteração, revisão manual ou prioridade por fonte", correct: true },
+        { text: "Converter o app para online-first e eliminar o problema", correct: false },
+        { text: "Apagar ambas as versões e solicitar nova entrada de dados", correct: false }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "Qual é o <em>princípio fundamental</em> de segurança mobile?",
+      options: [
+        { text: "Confiar no cliente para fazer todas as validações", correct: false },
+        { text: "Usar apenas HTTP para simplificar a comunicação", correct: false },
+        { text: "Armazenar tokens em texto puro para maior velocidade", correct: false },
+        { text: "Validação robusta no backend e princípio do menor privilégio", correct: true }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "O trade-off entre <em>segurança e desempenho</em> implica que…",
+      options: [
+        { text: "Mais segurança sempre melhora o desempenho do app", correct: false },
+        { text: "Segurança só é necessária para apps bancários", correct: false },
+        { text: "Mais segurança pode exigir mais processamento e etapas", correct: true },
+        { text: "Desempenho e segurança são sempre complementares", correct: false }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "O que é <em>arquitetura orientada à observabilidade</em>?",
+      options: [
+        { text: "Focar apenas na aparência visual do app para o usuário", correct: false },
+        { text: "Uso de logs estruturados, monitoramento centralizado e alertas", correct: true },
+        { text: "Observar apenas as métricas de negócio, como receita", correct: false },
+        { text: "Limitar o acesso de administradores ao painel do sistema", correct: false }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "Por que <em>confiar apenas no cliente</em> é erro arquitetural?",
+      options: [
+        { text: "Porque clientes mobile são mais rápidos que backends", correct: false },
+        { text: "Porque parte da lógica sempre estará exposta no dispositivo", correct: true },
+        { text: "Porque o cliente não consegue fazer requisições de rede", correct: false },
+        { text: "Porque toda a lógica de negócio fica na nuvem sempre", correct: false }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "Num <em>dilema de priorização</em>, o que deve guiar a decisão?",
+      options: [
+        { text: "Sempre priorizar novas features para reter usuários", correct: false },
+        { text: "Sempre corrigir dívidas técnicas antes de qualquer coisa", correct: false },
+        { text: "Depende do impacto: dívida crítica que afeta usuários tem prioridade", correct: true },
+        { text: "Deixar para o próximo sprint sem análise de impacto", correct: false }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "Qual afirmação sobre <em>escolha arquitetural</em> é correta?",
+      options: [
+        { text: "A melhor arquitetura é sempre a mais moderna disponível", correct: false },
+        { text: "Contexto vem antes da escolha técnica — não existe solução única", correct: true },
+        { text: "Online-first é sempre superior por garantir dados atualizados", correct: false },
+        { text: "A arquitetura pode ser definida após a implementação inicial", correct: false }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "A <em>perspectiva sistêmica integrada</em> de um arquiteto mobile inclui…",
+      options: [
+        { text: "Apenas arquitetura técnica e experiência do usuário", correct: false },
+        { text: "Somente métricas e governança organizacional", correct: false },
+        { text: "Código limpo, mas sem preocupação com segurança ou métricas", correct: false },
+        { text: "Arquitetura, experiência, segurança, métricas, governança e estratégia", correct: true }
+      ]
+    },
+    {
+      topic: "Arquitetura Mobile",
+      text: "O que diferencia <em>offline-first real</em> de apenas guardar dados localmente?",
+      options: [
+        { text: "Offline-first real não precisa de sincronização posterior", correct: false },
+        { text: "Guardar localmente já garante funcionamento completo offline", correct: false },
+        { text: "Offline-first real também resolve conflitos de sincronização", correct: true },
+        { text: "A diferença está apenas na escolha do banco de dados local", correct: false }
+      ]
+    },
+    {
+      topic: "Governança Mobile",
+      text: "Sem evolução um app fica obsoleto; sem governança, a evolução…",
+      options: [
+        { text: "Acontece de forma mais rápida e eficiente", correct: false },
+        { text: "Vira caos sem direção estratégica", correct: true },
+        { text: "Se auto-organiza com base no feedback dos usuários", correct: false },
+        { text: "É substituída por atualizações automáticas das plataformas", correct: false }
+      ]
+    }
+  ]
+};
+
+// ── CONFIG ──────────────────────────────────────────────────────
+const DIFF_CONFIG = {
+  easy:   { time: 10, label: "FÁCIL",  color: "var(--easy)" },
+  medium: { time: 13, label: "MÉDIO",  color: "var(--medium)" },
+  hard:   { time: 16, label: "DIFÍCIL",color: "var(--hard)" }
+};
+
+// ── STATE ───────────────────────────────────────────────────────
+let currentDiff = 'easy';
+let queue = [];
+let qIndex = 0;
+let score  = 0;
+let streak = 0;
+let maxStreak = 0;
+let correctCount = 0;
+let timerInterval = null;
+let timeLeft = 10;
+let answered = false;
+
+const LETTERS = ['A','B','C','D'];
+const CIRC = 2 * Math.PI * 31; // 194.78
+
+// ── UTILS ───────────────────────────────────────────────────────
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - .5);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function updateHUD() {
+  document.getElementById('score-val').textContent  = score;
+  document.getElementById('streak-val').textContent = streak + '🔥';
+}
+
+// ── GAME FLOW ───────────────────────────────────────────────────
+function startGame(diff) {
+  currentDiff  = diff;
+  const cfg    = DIFF_CONFIG[diff];
+  queue        = shuffle(questions[diff]);
+  qIndex       = 0;
+  score        = 0;
+  streak       = 0;
+  maxStreak    = 0;
+  correctCount = 0;
+
+  const badge = document.getElementById('diff-badge');
+  badge.textContent = cfg.label;
+  badge.className   = 'diff-badge ' + diff;
+
+  document.getElementById('q-total').textContent = queue.length;
+  updateHUD();
+  showScreen('game');
+  loadQuestion();
+}
+
+function loadQuestion() {
+  answered = false;
+  const q   = queue[qIndex];
+  const cfg = DIFF_CONFIG[currentDiff];
+
+  // progress
+  document.getElementById('progress').style.width =
+    (qIndex / queue.length * 100) + '%';
+
+  document.getElementById('q-num').textContent = qIndex + 1;
+  document.getElementById('q-topic').textContent = q.topic;
+  document.getElementById('q-text').innerHTML   = q.text;
+
+  // options (shuffled)
+  const shuffled = shuffle(q.options.map((o, i) => ({ ...o, _orig: i })));
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+
+  shuffled.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-letter">${LETTERS[i]}</span>${opt.text}`;
+    btn.onclick = () => handleAnswer(opt.correct, btn, shuffled);
+    grid.appendChild(btn);
+  });
+
+  // feedback
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback';
+  fb.innerHTML = '';
+
+  // q-card reset
+  document.getElementById('q-card').classList.remove('timeout');
+
+  // timer
+  startTimer(cfg.time);
+}
+
+function startTimer(seconds) {
+  clearInterval(timerInterval);
+  timeLeft = seconds;
+
+  const arc = document.getElementById('timer-arc');
+  const num = document.getElementById('timer-num');
+
+  arc.style.stroke = 'var(--accent)';
+  num.className    = 'timer-num';
+  num.textContent  = timeLeft;
+  arc.style.strokeDashoffset = '0';
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    const offset = CIRC * (1 - timeLeft / seconds);
+    arc.style.strokeDashoffset = offset;
+    num.textContent = timeLeft;
+
+    if (timeLeft <= 3) {
+      arc.style.stroke = 'var(--warn)';
+      num.className    = 'timer-num danger';
+    } else if (timeLeft <= Math.floor(seconds * .4)) {
+      arc.style.stroke = 'var(--medium)';
+    }
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      onTimeout();
+    }
+  }, 1000);
+}
+
+function handleAnswer(correct, clickedBtn, opts) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const allBtns = document.querySelectorAll('.opt-btn');
+  allBtns.forEach(b => b.disabled = true);
+
+  // reveal correct
+  allBtns.forEach((b, i) => {
+    if (opts[i].correct) b.classList.add('correct');
+  });
+
+  if (correct) {
+    clickedBtn.classList.remove('correct');
+    clickedBtn.classList.add('correct');
+    const bonus  = Math.max(1, timeLeft);
+    const points = 100 + bonus * 10 + streak * 20;
+    score       += points;
+    streak++;
+    maxStreak    = Math.max(maxStreak, streak);
+    correctCount++;
+    showFeedback('ok', `✓ Correto! +${points} pontos`);
+  } else {
+    clickedBtn.classList.add('wrong');
+    streak = 0;
+    showFeedback('err', '✗ Incorreto! Veja a resposta correta destacada.');
+  }
+
+  updateHUD();
+  setTimeout(nextOrEnd, 1600);
+}
+
+function onTimeout() {
+  if (answered) return;
+  answered = true;
+  streak   = 0;
+
+  const grid    = document.getElementById('options-grid');
+  const allBtns = grid.querySelectorAll('.opt-btn');
+  const opts    = queue[qIndex].options;
+
+  // We need to get shuffled order — read from DOM
+  // Just disable all and highlight correct by re-querying
+  // Since shuffle is inside loadQuestion, we store a ref
+  allBtns.forEach(b => b.disabled = true);
+
+  // highlight correct — opts array not available here directly
+  // We encoded it in the onclick; let's find correct by data attr trick
+  // Alternative: just grey all out with timeout message
+  document.getElementById('q-card').classList.add('timeout');
+  showFeedback('time', '⏰ Tempo esgotado! Próxima questão…');
+  updateHUD();
+  setTimeout(nextOrEnd, 1600);
+}
+
+function showFeedback(type, msg) {
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + type;
+  fb.innerHTML = msg;
+}
+
+function nextOrEnd() {
+  qIndex++;
+  if (qIndex >= queue.length) {
+    endGame();
+  } else {
+    loadQuestion();
+  }
+}
+
+function endGame() {
+  document.getElementById('progress').style.width = '100%';
+
+  const pct = Math.round(correctCount / queue.length * 100);
+  let icon, title, sub;
+
+  if (pct === 100) {
+    icon  = '🏆';
+    title = 'Perfeito!';
+    sub   = `Você acertou todas as ${queue.length} questões. Excelente domínio do conteúdo!`;
+  } else if (pct >= 70) {
+    icon  = '🎯';
+    title = 'Muito bem!';
+    sub   = `${correctCount} de ${queue.length} corretas (${pct}%). Continue praticando!`;
+  } else if (pct >= 40) {
+    icon  = '📱';
+    title = 'Bom esforço!';
+    sub   = `${correctCount} de ${queue.length} corretas (${pct}%). Revise os conceitos e tente novamente.`;
+  } else {
+    icon  = '📚';
+    title = 'Continue estudando!';
+    sub   = `${correctCount} de ${queue.length} corretas (${pct}%). Releia os materiais e tente novamente.`;
+  }
+
+  document.getElementById('result-icon').textContent  = icon;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-sub').textContent   = sub;
+  document.getElementById('r-score').textContent      = score;
+  document.getElementById('r-correct').textContent    = `${correctCount}/${queue.length}`;
+  document.getElementById('r-streak').textContent     = maxStreak;
+
+  showScreen('result');
+}
+
+function goHome() {
+  clearInterval(timerInterval);
+  score = 0; streak = 0;
+  updateHUD();
+  showScreen('start');
+}
+</script>
+</body>
+</html>
