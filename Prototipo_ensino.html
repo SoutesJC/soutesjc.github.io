@@ -1,0 +1,362 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.xp-track{height:8px;background:var(--color-border-tertiary);border-radius:4px;overflow:hidden}
+.xp-fill{height:100%;background:#1D9E75;border-radius:4px;transition:width 0.5s ease}
+.phase-item{padding:10px 14px;border-radius:var(--border-radius-md);cursor:pointer;border:0.5px solid transparent;transition:all 0.15s}
+.phase-item:hover{background:var(--color-background-secondary)}
+.phase-item.active{background:#E1F5EE;border-color:#5DCAA5}
+.phase-item.locked{opacity:0.45;cursor:not-allowed}
+.mat-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);cursor:pointer;transition:all 0.15s;margin-bottom:8px}
+.mat-row:hover{border-color:var(--color-border-secondary);background:var(--color-background-secondary)}
+.mat-row.done{border-color:#5DCAA5;background:#E1F5EE}
+.mat-row.locked{opacity:0.4;cursor:not-allowed}
+.mat-row.current-item{border-color:#378ADD;background:#E6F1FB}
+.circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--border-radius-md);font-size:11px;font-weight:500}
+.btn-primary{background:#0F6E56;color:#E1F5EE;border:none;padding:8px 20px;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;transition:opacity 0.15s}
+.btn-primary:hover{opacity:0.85}
+.btn-primary:disabled{opacity:0.35;cursor:not-allowed}
+.panel{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:20px}
+.progress-seg{height:5px;border-radius:3px;flex:1;transition:background 0.3s}
+</style>
+
+<h2 class="sr-only">Protótipo de plataforma de ensino com fases de curso, XP e materiais interativos</h2>
+
+<div id="root" style="padding:0 0 2rem"></div>
+
+<script>
+const USER = {name:"Lucas Ferreira",initials:"LF",level:7,xp:3240,xpNext:4000,streak:12,badges:["Dedicado","Explorador"]};
+const COURSE = {title:"Desenvolvimento Web Full Stack",subtitle:"Trilha Completa · 5 módulos · 48 aulas",instructor:"Prof. Ana Beatriz Costa"};
+
+const PHASES = [
+  {id:1,title:"Fundamentos HTML & CSS",desc:"Estrutura, semântica e estilização de páginas.",icon:"H",color:"#5DCAA5",status:"done",xpGain:400,
+   materials:[
+    {id:"1a",type:"video",title:"Introdução ao HTML5 semântico",dur:"18 min",done:true},
+    {id:"1b",type:"read",title:"Guia de CSS: box model e flexbox",dur:"12 min leitura",done:true},
+    {id:"1c",type:"video",title:"Responsividade com media queries",dur:"22 min",done:true},
+    {id:"1d",type:"quiz",title:"Atividade: crie seu primeiro layout",dur:"Exercício prático",done:true},
+   ]},
+  {id:2,title:"JavaScript Essencial",desc:"Variáveis, funções, DOM e eventos.",icon:"JS",color:"#378ADD",status:"active",xpGain:560,
+   materials:[
+    {id:"2a",type:"video",title:"Tipos de dados e operadores",dur:"20 min",done:true},
+    {id:"2b",type:"read",title:"Funções: declaração, arrow e closures",dur:"15 min leitura",done:true},
+    {id:"2c",type:"video",title:"Manipulação do DOM na prática",dur:"26 min",done:false,current:true},
+    {id:"2d",type:"quiz",title:"Mini-projeto: lista de tarefas",dur:"Exercício guiado",done:false},
+    {id:"2e",type:"read",title:"Promises e async/await",dur:"18 min leitura",done:false},
+    {id:"2f",type:"quiz",title:"Avaliação do módulo",dur:"10 questões",done:false},
+   ]},
+  {id:3,title:"React & Frontend Moderno",desc:"Componentes, hooks, estado e contexto.",icon:"R",color:"#7F77DD",status:"locked",xpGain:680,
+   materials:[
+    {id:"3a",type:"video",title:"Criando componentes funcionais",dur:"24 min",done:false},
+    {id:"3b",type:"video",title:"useState e useEffect na prática",dur:"30 min",done:false},
+    {id:"3c",type:"read",title:"Gerenciamento de estado com Context API",dur:"20 min leitura",done:false},
+    {id:"3d",type:"quiz",title:"Projeto: SPA com roteamento",dur:"Projeto guiado",done:false},
+   ]},
+  {id:4,title:"Node.js & APIs REST",desc:"Servidor, rotas, middleware e autenticação.",icon:"N",color:"#EF9F27",status:"locked",xpGain:720,
+   materials:[
+    {id:"4a",type:"video",title:"Criando um servidor com Express",dur:"22 min",done:false},
+    {id:"4b",type:"read",title:"Arquitetura REST e boas práticas",dur:"16 min leitura",done:false},
+    {id:"4c",type:"video",title:"JWT e autenticação stateless",dur:"28 min",done:false},
+    {id:"4d",type:"quiz",title:"Projeto: API de blog completo",dur:"Projeto final",done:false},
+   ]},
+  {id:5,title:"Banco de Dados & Deploy",desc:"PostgreSQL, ORM e publicação em produção.",icon:"DB",color:"#D85A30",status:"locked",xpGain:800,
+   materials:[
+    {id:"5a",type:"video",title:"Modelagem relacional com PostgreSQL",dur:"25 min",done:false},
+    {id:"5b",type:"read",title:"Prisma ORM: queries e migrações",dur:"20 min leitura",done:false},
+    {id:"5c",type:"video",title:"Deploy na Vercel e Railway",dur:"18 min",done:false},
+    {id:"5d",type:"quiz",title:"Avaliação final do curso",dur:"Projeto integrador",done:false},
+   ]},
+];
+
+let state = {
+  selectedPhase: 2,
+  phases: JSON.parse(JSON.stringify(PHASES)),
+  viewingMaterial: null,
+  notification: null,
+};
+
+function phaseDoneCount(p){return p.materials.filter(m=>m.done).length}
+function phaseProgress(p){return Math.round((phaseDoneCount(p)/p.materials.length)*100)}
+function totalXP(){let x=USER.xp;state.phases.forEach(p=>{if(p.status==="done")x+=0});return x}
+function xpPct(){return Math.round((USER.xp/USER.xpNext)*100)}
+
+function typeIcon(type){
+  if(type==="video") return `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M6 4l7 4-7 4V4z"/></svg>`;
+  if(type==="read") return `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3 3h10v1H3zm0 3h10v1H3zm0 3h7v1H3z"/></svg>`;
+  if(type==="quiz") return `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v12H2V2zm1 1v10h10V3H3zm2 2h6v1H5V5zm0 3h4v1H5V8z"/></svg>`;
+  return "";
+}
+
+function typeLabel(type){return type==="video"?"Videoaula":type==="read"?"Leitura":"Atividade"}
+function typeColor(type){return type==="video"?"#185FA5":type==="read"?"#534AB7":"#854F0B"}
+function typeBg(type){return type==="video"?"#E6F1FB":type==="read"?"#EEEDFE":"#FAEEDA"}
+
+function notify(msg){
+  state.notification = msg;
+  render();
+  setTimeout(()=>{state.notification=null;render();},2800);
+}
+
+function markDone(phaseId, matId){
+  const ph = state.phases.find(p=>p.id===phaseId);
+  if(!ph||ph.status==="locked") return;
+  const mat = ph.materials.find(m=>m.id===matId);
+  if(!mat) return;
+  mat.done = true;
+  mat.current = false;
+  const nextMat = ph.materials.find(m=>!m.done);
+  if(nextMat) nextMat.current = true;
+  if(ph.materials.every(m=>m.done)){
+    ph.status = "done";
+    const next = state.phases.find(p=>p.id===phaseId+1);
+    if(next) next.status = "active";
+    notify("Fase concluída! Próximo módulo desbloqueado.");
+  } else {
+    notify("Material concluído! Continue assim.");
+  }
+  render();
+}
+
+function completePhase(phaseId){
+  const ph = state.phases.find(p=>p.id===phaseId);
+  if(!ph) return;
+  ph.materials.forEach(m=>m.done=true);
+  ph.status="done";
+  const next = state.phases.find(p=>p.id===phaseId+1);
+  if(next) next.status="active";
+  notify("Fase concluída! Próximo módulo desbloqueado.");
+  render();
+}
+
+function render(){
+  const selPhase = state.phases.find(p=>p.id===state.selectedPhase)||state.phases[0];
+  const donePhases = state.phases.filter(p=>p.status==="done").length;
+  const totalPhases = state.phases.length;
+  const xp = USER.xp;
+  const xpPct = Math.round((xp/USER.xpNext)*100);
+
+  let html = `
+  <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:16px">
+
+    ${state.notification?`<div style="background:#E1F5EE;border:0.5px solid #5DCAA5;border-radius:var(--border-radius-md);padding:10px 16px;font-size:13px;color:#085041;display:flex;align-items:center;gap:8px">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="#0F6E56"><path d="M13 4L6.5 11 3 7.5l1-1 2.5 2.5L12 3l1 1z"/></svg>
+      ${state.notification}
+    </div>`:""}
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:12px">
+
+      <div class="panel" style="padding:16px">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div class="circle" style="width:48px;height:48px;background:#E1F5EE;color:#085041;font-size:15px">${USER.initials}</div>
+          <div style="flex:1;min-width:160px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+              <span style="font-size:15px;font-weight:500;color:var(--color-text-primary)">${USER.name}</span>
+              <span class="badge" style="background:#EEEDFE;color:#3C3489">Nível ${USER.level}</span>
+            </div>
+            <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:8px">
+              ${USER.streak} dias seguidos
+              ${USER.badges.map(b=>`<span class="badge" style="background:#FAEEDA;color:#633806;margin-left:4px">${b}</span>`).join("")}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="xp-track" style="flex:1"><div class="xp-fill" style="width:${xpPct}%"></div></div>
+              <span style="font-size:11px;color:var(--color-text-secondary);white-space:nowrap">${xp.toLocaleString()} / ${USER.xpNext.toLocaleString()} XP</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-width:200px">
+            ${[
+              {label:"Concluídos",val:`${donePhases}/${totalPhases}`},
+              {label:"Materiais",val:`${state.phases.flatMap(p=>p.materials).filter(m=>m.done).length}`},
+              {label:"Certificados",val:`${donePhases>0?1:0}`},
+            ].map(s=>`
+              <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 10px;text-align:center">
+                <div style="font-size:16px;font-weight:500;color:var(--color-text-primary)">${s.val}</div>
+                <div style="font-size:10px;color:var(--color-text-tertiary)">${s.label}</div>
+              </div>`).join("")}
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="padding:14px 16px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px">${COURSE.title}</div>
+            <div style="font-size:12px;color:var(--color-text-secondary)">${COURSE.subtitle} · ${COURSE.instructor}</div>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <div style="display:flex;gap:3px;align-items:center">
+              ${state.phases.map(p=>`<div class="progress-seg" style="background:${p.status==="done"?"#1D9E75":p.status==="active"?"#378ADD":"var(--color-border-tertiary)"}"></div>`).join("")}
+            </div>
+            <span style="font-size:12px;color:var(--color-text-secondary);white-space:nowrap">${Math.round((donePhases/totalPhases)*100)}% completo</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;align-items:start">
+
+      <div class="panel" style="padding:12px">
+        <div style="font-size:11px;font-weight:500;color:var(--color-text-tertiary);letter-spacing:0.5px;margin-bottom:10px;text-transform:uppercase">Módulos</div>
+        ${state.phases.map(p=>{
+          const isActive = p.id===state.selectedPhase;
+          const pct = phaseProgress(p);
+          return `<div class="phase-item${isActive?" active":""}${p.status==="locked"?" locked":""}"
+            onclick="${p.status!=="locked"?`selectPhase(${p.id})`:"showLocked()"}"
+            style="margin-bottom:4px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="circle" style="width:28px;height:28px;background:${p.status==="done"?"#E1F5EE":p.status==="active"?"#E6F1FB":"var(--color-background-secondary)"};color:${p.status==="done"?"#085041":p.status==="active"?"#185FA5":"var(--color-text-tertiary)"};font-size:10px">${p.status==="done"?`<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M13 4L6.5 11 3 7.5l1-1 2.5 2.5L12 3l1 1z"/></svg>`:p.status==="locked"?`<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a3 3 0 00-3 3v2H4v7h8V7h-1V5a3 3 0 00-3-3zm0 1.5A1.5 1.5 0 019.5 5v2h-3V5A1.5 1.5 0 018 3.5z"/></svg>`:p.icon}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:${isActive?500:400};color:${p.status==="locked"?"var(--color-text-tertiary)":"var(--color-text-primary)"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.title}</div>
+                ${p.status!=="locked"?`<div style="display:flex;align-items:center;gap:4px;margin-top:3px">
+                  <div style="flex:1;height:3px;background:var(--color-border-tertiary);border-radius:2px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${p.status==="done"?"#1D9E75":"#378ADD"};border-radius:2px"></div></div>
+                  <span style="font-size:10px;color:var(--color-text-tertiary)">${pct}%</span>
+                </div>`:`<div style="font-size:10px;color:var(--color-text-tertiary);margin-top:2px">Complete o anterior</div>`}
+              </div>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+
+      <div>
+        ${selPhase?renderPhaseDetail(selPhase):""}
+      </div>
+
+    </div>
+  </div>`;
+
+  document.getElementById("root").innerHTML = html;
+}
+
+function renderPhaseDetail(p){
+  const pct = phaseProgress(p);
+  const doneCount = phaseDoneCount(p);
+  const allDone = p.materials.every(m=>m.done);
+  const canComplete = p.status==="active" && !allDone;
+
+  return `<div style="display:grid;gap:12px">
+    <div class="panel" style="padding:16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            ${p.status==="done"?`<span class="badge" style="background:#E1F5EE;color:#085041">Concluído</span>`:
+              p.status==="active"?`<span class="badge" style="background:#E6F1FB;color:#0C447C">Em andamento</span>`:
+              `<span class="badge" style="background:var(--color-background-secondary);color:var(--color-text-tertiary)">Bloqueado</span>`}
+            <span style="font-size:11px;color:var(--color-text-tertiary">+${p.xpGain} XP ao concluir</span>
+          </div>
+          <div style="font-size:16px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px">${p.title}</div>
+          <div style="font-size:13px;color:var(--color-text-secondary)">${p.desc}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:22px;font-weight:500;color:var(--color-text-primary)">${pct}%</div>
+          <div style="font-size:11px;color:var(--color-text-tertiary)">${doneCount} de ${p.materials.length} itens</div>
+        </div>
+      </div>
+      <div class="xp-track" style="height:6px"><div class="xp-fill" style="width:${pct}%;background:${p.status==="done"?"#1D9E75":"#378ADD"}"></div></div>
+    </div>
+
+    <div class="panel" style="padding:16px">
+      <div style="font-size:13px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px">Materiais do módulo</div>
+      ${p.materials.map((m,i)=>{
+        const isLocked = p.status==="locked";
+        const isCurrent = m.current && p.status==="active";
+        const cls = m.done?"done":isLocked?"locked":isCurrent?"current-item":"";
+        return `<div class="mat-row ${cls}" onclick="${!isLocked?`openMaterial('${p.id}','${m.id}')`:""}" style="position:relative">
+          <div style="width:22px;height:22px;border-radius:50%;background:${m.done?"#1D9E75":isCurrent?"#378ADD":"var(--color-border-tertiary)"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            ${m.done?`<svg width="11" height="11" viewBox="0 0 16 16" fill="#E1F5EE"><path d="M13 4L6.5 11 3 7.5l1-1 2.5 2.5L12 3l1 1z"/></svg>`:
+            isCurrent?`<div style="width:7px;height:7px;border-radius:50%;background:#E6F1FB"></div>`:
+            `<span style="font-size:10px;color:var(--color-text-tertiary)">${i+1}</span>`}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:13px;font-weight:${isCurrent?500:400};color:${m.done?"#085041":isCurrent?"#0C447C":"var(--color-text-primary)"};overflow:hidden;text-overflow:ellipsis">${m.title}</span>
+              ${isCurrent?`<span class="badge" style="background:#E6F1FB;color:#185FA5;font-size:10px">atual</span>`:""}
+            </div>
+            <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:2px">${m.dur}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <div class="circle" style="width:26px;height:26px;background:${typeBg(m.type)};color:${typeColor(m.type)};font-size:11px">${typeIcon(m.type)}</div>
+            <span style="font-size:11px;color:var(--color-text-tertiary)">${typeLabel(m.type)}</span>
+            ${!isLocked?`<svg width="12" height="12" viewBox="0 0 16 16" fill="var(--color-text-tertiary)"><path d="M6 4l5 4-5 4V4z"/></svg>`:`<svg width="12" height="12" viewBox="0 0 16 16" fill="var(--color-text-tertiary)"><path d="M8 2a3 3 0 00-3 3v2H4v7h8V7h-1V5a3 3 0 00-3-3zm0 1.5A1.5 1.5 0 019.5 5v2h-3V5A1.5 1.5 0 018 3.5z"/></svg>`}
+          </div>
+        </div>`;
+      }).join("")}
+
+      ${canComplete?`<div style="margin-top:16px;padding-top:14px;border-top:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <span style="font-size:12px;color:var(--color-text-secondary)">Complete todos os materiais para avançar</span>
+        <button class="btn-primary" disabled>Concluir módulo</button>
+      </div>`:""}
+
+      ${allDone && p.status==="done"?`<div style="margin-top:14px;padding:12px;border-radius:var(--border-radius-md);background:#E1F5EE;border:0.5px solid #5DCAA5;display:flex;align-items:center;gap:10px">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="#0F6E56"><path d="M13 4L6.5 11 3 7.5l1-1 2.5 2.5L12 3l1 1z"/></svg>
+        <div>
+          <div style="font-size:13px;font-weight:500;color:#085041">Módulo concluído</div>
+          <div style="font-size:11px;color:#0F6E56">Você ganhou +${p.xpGain} XP neste módulo</div>
+        </div>
+      </div>`:""}
+    </div>
+
+    ${renderMaterialModal(p)}
+  </div>`;
+}
+
+function renderMaterialModal(phase){
+  if(!state.viewingMaterial || state.viewingMaterial.phaseId !== phase.id) return "";
+  const mat = phase.materials.find(m=>m.id===state.viewingMaterial.matId);
+  if(!mat) return "";
+
+  const CONTENT = {
+    video:{label:"Videoaula",preview:`<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);padding:40px;text-align:center">
+      <div style="width:56px;height:56px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="#185FA5"><path d="M6 4l7 4-7 4V4z"/></svg>
+      </div>
+      <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px">Player de vídeo</div>
+      <div style="font-size:12px;color:var(--color-text-secondary)">${mat.dur} · HD disponível</div>
+    </div>`},
+    read:{label:"Leitura",preview:`<div style="font-size:13px;color:var(--color-text-secondary);line-height:1.7;padding:12px;border-radius:var(--border-radius-md);background:var(--color-background-secondary);border-left:3px solid #7F77DD">
+      <p style="margin-bottom:8px">Este material aborda os principais conceitos de <strong style="color:var(--color-text-primary)">${mat.title}</strong> com exemplos práticos e exercícios aplicados ao contexto de desenvolvimento web moderno.</p>
+      <p>Você vai aprender como aplicar cada técnica em projetos reais, com boas práticas de código e padrões da indústria.</p>
+    </div>`},
+    quiz:{label:"Atividade",preview:`<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:16px;border:0.5px solid var(--color-border-tertiary)">
+      <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:10px">Questão 1 de 5</div>
+      <div style="font-size:13px;color:var(--color-text-primary);margin-bottom:12px">Qual a diferença entre <code style="background:var(--color-background-primary);padding:1px 5px;border-radius:4px;font-size:12px">let</code> e <code style="background:var(--color-background-primary);padding:1px 5px;border-radius:4px;font-size:12px">const</code> em JavaScript?</div>
+      ${["let é imutável, const pode ser reatribuído","const é imutável, let pode ser reatribuído","Ambos são iguais no escopo de bloco","Nenhuma das anteriores"].map((opt,i)=>
+        `<div style="padding:8px 12px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:6px;font-size:12px;cursor:pointer;color:var(--color-text-primary)">${["a","b","c","d"][i]}) ${opt}</div>`
+      ).join("")}
+    </div>`},
+  };
+  const c = CONTENT[mat.type];
+
+  return `<div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:18px;margin-top:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <div class="circle" style="width:22px;height:22px;background:${typeBg(mat.type)};color:${typeColor(mat.type)};font-size:11px">${typeIcon(mat.type)}</div>
+          <span style="font-size:11px;color:var(--color-text-secondary)">${c.label}</span>
+        </div>
+        <div style="font-size:14px;font-weight:500;color:var(--color-text-primary)">${mat.title}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        ${!mat.done?`<button class="btn-primary" onclick="markDone(${phase.id},'${mat.id}')" style="font-size:12px;padding:6px 14px">Marcar concluído</button>`:`<span class="badge" style="background:#E1F5EE;color:#085041">Concluído</span>`}
+        <button onclick="closeMaterial()" style="background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:5px 10px;font-size:12px;cursor:pointer;color:var(--color-text-secondary)">Fechar</button>
+      </div>
+    </div>
+    ${c.preview}
+  </div>`;
+}
+
+function selectPhase(id){state.selectedPhase=id;state.viewingMaterial=null;render();}
+function showLocked(){notify("Complete o módulo anterior para desbloquear este.");}
+function openMaterial(phaseId,matId){state.viewingMaterial={phaseId:parseInt(phaseId),matId};render();}
+function closeMaterial(){state.viewingMaterial=null;render();}
+
+window.selectPhase=selectPhase;
+window.showLocked=showLocked;
+window.openMaterial=openMaterial;
+window.closeMaterial=closeMaterial;
+window.markDone=markDone;
+window.completePhase=completePhase;
+
+render();
+</script>
