@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Plataforma de Ensino</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --color-background-primary:#0F172A;
+  --color-background-secondary:#1E293B;
+  --color-background-tertiary:#334155;
+
+  --color-text-primary:#F1F5F9;
+  --color-text-secondary:#94A3B8;
+  --color-text-tertiary:#64748B;
+
+  --color-border-primary:#1E293B;
+  --color-border-secondary:#334155;
+  --color-border-tertiary:#475569;
+
+  --color-accent:#22C55E;
+
+  --border-radius-md:10px;
+  --border-radius-lg:14px;
+
+  --font-sans:'Inter',system-ui,sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:var(--font-sans);
+  background:var(--color-background-primary);
+  color:var(--color-text-primary);
+}
+
+#root{
+  padding:24px;
+  max-width:1200px;
+  margin:0 auto;
+}
+
+.panel{
+  background:var(--color-background-secondary);
+  border:1px solid var(--color-border-primary);
+  border-radius:var(--border-radius-lg);
+  padding:20px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.25);
+}
+
+.btn-primary{
+  background:var(--color-accent);
+  color:#022C22;
+  border:none;
+  padding:10px 18px;
+  border-radius:10px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .2s;
+}
+.btn-primary:hover{
+  transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(34,197,94,.3);
+}
+
+.phase-item{
+  padding:12px;
+  border-radius:10px;
+  transition:.2s;
+}
+.phase-item:hover{
+  background:var(--color-background-tertiary);
+}
+.phase-item.active{
+  background:#1E3A8A;
+}
+
+.mat-row{
+  display:flex;
+  gap:12px;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid var(--color-border-primary);
+  background:var(--color-background-secondary);
+  margin-bottom:10px;
+  transition:.2s;
+  cursor:pointer;
+}
+.mat-row:hover{
+  background:var(--color-background-tertiary);
+  transform:translateY(-2px);
+}
+
+.xp-track{
+  height:6px;
+  background:var(--color-border-tertiary);
+  border-radius:999px;
+  overflow:hidden;
+}
+.xp-fill{
+  height:100%;
+  background:linear-gradient(90deg,#22C55E,#4ADE80);
+}
+
+.circle{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--color-background-tertiary);
+}
+
+.badge{
+  background:var(--color-background-tertiary);
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:11px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="root"></div>
+
+<script>
+const USER={name:"Lucas",xp:3200,xpNext:4000};
+
+const materials=[
+  {title:"HTML Básico",done:true},
+  {title:"CSS Flexbox",done:false},
+  {title:"JavaScript DOM",done:false},
+];
+
+function render(){
+  const done=materials.filter(m=>m.done).length;
+  const pct=Math.round((USER.xp/USER.xpNext)*100);
+
+  document.getElementById("root").innerHTML=`
+  
+  <div style="display:grid;gap:20px">
+
+    <div class="panel">
+      <h2>${USER.name}</h2>
+      <div style="margin-top:10px" class="xp-track">
+        <div class="xp-fill" style="width:${pct}%"></div>
+      </div>
+      <small>${USER.xp} / ${USER.xpNext} XP</small>
+    </div>
+
+    <div class="panel">
+      <h3>Curso</h3>
+      <div style="margin-top:10px">
+
+        ${materials.map((m,i)=>`
+          <div class="mat-row" onclick="toggle(${i})">
+            <div class="circle">${m.done?"✓":i+1}</div>
+            <div>${m.title}</div>
+          </div>
+        `).join("")}
+
+      </div>
+    </div>
+
+  </div>
+  `;
+}
+
+function toggle(i){
+  materials[i].done=!materials[i].done;
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>
