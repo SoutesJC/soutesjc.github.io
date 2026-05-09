@@ -1,0 +1,2764 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassHero — Protótipo de Interface</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS — ClassHero Refactor
+   ============================================================ */
+:root {
+  /* Backgrounds — NOT pure black, layered depth */
+  --bg-root:       #080C18;
+  --bg-surface:    #0F1526;
+  --bg-elevated:   #16203A;
+  --bg-card:       #1A2744;
+  --bg-hover:      #1F3055;
+
+  /* Brand */
+  --brand-primary:  #4D8EFF;
+  --brand-glow:     rgba(77,142,255,0.20);
+  --brand-deep:     #2B62D4;
+
+  /* Gamification */
+  --xp-gold:        #F5C542;
+  --xp-gold-glow:   rgba(245,197,66,0.25);
+  --xp-gold-dim:    rgba(245,197,66,0.12);
+  --level-teal:     #22D3EE;
+  --progress-green: #34D399;
+  --progress-dim:   rgba(52,211,153,0.15);
+
+  /* Status */
+  --status-done:    #34D399;
+  --status-active:  #4D8EFF;
+  --status-warn:    #FBBF24;
+  --status-danger:  #F87171;
+  --status-neutral: #64748B;
+
+  /* Text */
+  --text-primary:   #F0F4FF;
+  --text-secondary: #94A3B8;
+  --text-muted:     #4B5D7A;
+  --text-inverse:   #080C18;
+
+  /* Borders */
+  --border-subtle:  rgba(255,255,255,0.06);
+  --border-medium:  rgba(255,255,255,0.12);
+  --border-strong:  rgba(255,255,255,0.20);
+
+  /* Shadows */
+  --shadow-card:    0 4px 24px rgba(0,0,0,0.5);
+  --shadow-glow:    0 0 32px rgba(77,142,255,0.18);
+
+  /* Radii */
+  --radius-sm:  6px;
+  --radius-md:  12px;
+  --radius-lg:  18px;
+  --radius-xl:  24px;
+  --radius-pill: 999px;
+
+  /* Sidebar */
+  --sidebar-w: 240px;
+
+  /* Typography */
+  --font-display: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font-body);
+  background: var(--bg-root);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+input, textarea { font-family: inherit; }
+ul { list-style: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 4px; }
+
+/* ============================================================
+   SCREEN ROUTER
+   ============================================================ */
+.screen { display: none; }
+.screen.active { display: flex; }
+
+/* ============================================================
+   ██╗      ██████╗  ██████╗ ██╗███╗   ██╗
+   ██║     ██╔═══██╗██╔════╝ ██║████╗  ██║
+   ██║     ██║   ██║██║  ███╗██║██╔██╗ ██║
+   ██║     ██║   ██║██║   ██║██║██║╚██╗██║
+   ███████╗╚██████╔╝╚██████╔╝██║██║ ╚████║
+   ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝
+   ============================================================ */
+#screen-login {
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Constellation background */
+.login-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 50%, rgba(45,90,200,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 80% 20%, rgba(77,142,255,0.10) 0%, transparent 55%),
+    var(--bg-root);
+}
+
+.login-stars {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 15% 25%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 70%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 55% 15%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 40%, rgba(255,255,255,0.45) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 85%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 90% 80%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 45%, rgba(245,197,66,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 55%, rgba(245,197,66,0.4) 0%, transparent 100%);
+}
+
+.login-layout {
+  position: relative; z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 80px;
+  max-width: 900px;
+  width: 90%;
+  align-items: center;
+}
+
+/* Brand side */
+.login-brand { }
+
+.login-logo {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 28px;
+}
+
+.login-logo-icon {
+  width: 40px; height: 40px;
+  background: var(--brand-primary);
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 0 24px var(--brand-glow);
+}
+
+.login-logo-text {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.login-headline {
+  font-family: var(--font-display);
+  font-size: 42px; font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  margin-bottom: 16px;
+}
+
+.login-headline em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--xp-gold), #FF9A3C);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-sub {
+  color: var(--text-secondary);
+  font-size: 15px;
+  max-width: 320px;
+  line-height: 1.7;
+}
+
+.login-stats {
+  display: flex; gap: 28px; margin-top: 32px;
+}
+
+.login-stat-val {
+  font-family: var(--font-display);
+  font-size: 24px; font-weight: 800;
+  color: var(--xp-gold);
+}
+.login-stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* Auth card */
+.auth-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xl);
+  padding: 36px;
+  box-shadow: var(--shadow-card), 0 0 60px rgba(77,142,255,0.08);
+}
+
+.auth-step { display: none; }
+.auth-step.active { display: block; animation: fadeUp 0.3s ease; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.auth-title {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.auth-subtitle {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.auth-subtitle strong { color: var(--brand-primary); }
+
+.form-field { margin-bottom: 16px; }
+
+.form-label {
+  display: block;
+  font-size: 12px; font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.6px;
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%; padding: 12px 16px;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px var(--brand-glow);
+}
+
+.form-input.error {
+  border-color: var(--status-danger);
+  box-shadow: 0 0 0 3px rgba(248,113,113,0.15);
+}
+
+.form-error-msg {
+  display: none;
+  font-size: 12px; color: var(--status-danger);
+  margin-top: 6px;
+}
+.form-input.error + .form-error-msg { display: block; }
+
+/* OTP input */
+.otp-wrapper {
+  display: flex; gap: 10px; justify-content: center;
+  margin: 20px 0;
+}
+
+.otp-digit {
+  width: 52px; height: 60px;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 24px; font-weight: 700;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.otp-digit:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px var(--brand-glow);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  font-size: 14px; font-weight: 600;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--brand-primary);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(77,142,255,0.35);
+}
+.btn-primary:hover {
+  background: #6BA3FF;
+  box-shadow: 0 4px 24px rgba(77,142,255,0.5);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1.5px solid var(--border-medium);
+}
+.btn-ghost:hover { background: var(--bg-elevated); color: var(--text-primary); }
+
+.btn-full { width: 100%; }
+
+.btn-sm { padding: 7px 14px; font-size: 12px; }
+
+.resend-area {
+  text-align: center; margin-top: 16px;
+}
+.resend-btn {
+  font-size: 13px; color: var(--brand-primary); background: none;
+  cursor: pointer; border: none;
+}
+.resend-btn:disabled { color: var(--text-muted); cursor: default; }
+.resend-timer { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+.auth-email-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 20px;
+}
+.auth-email-text { font-size: 13px; color: var(--text-secondary); flex: 1; }
+.auth-email-change {
+  font-size: 12px; color: var(--text-muted); background: none;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm); padding: 4px 10px;
+  cursor: pointer; transition: all 0.15s;
+}
+.auth-email-change:hover { color: var(--text-primary); border-color: var(--border-strong); }
+
+/* Toast */
+.toast {
+  position: fixed; top: 20px; right: 20px; z-index: 9999;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-left: 3px solid var(--status-done);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  font-size: 13px; font-weight: 500;
+  transform: translateX(120%);
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.toast.show { transform: translateX(0); }
+.toast-icon { font-size: 16px; }
+
+/* ============================================================
+   MAIN APP LAYOUT
+   ============================================================ */
+#screen-app {
+  width: 100%; height: 100%;
+  flex-direction: row;
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  height: 100%;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Decorative gradient at bottom of sidebar */
+.sidebar::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+  background: linear-gradient(to top, var(--bg-surface), transparent);
+  pointer-events: none; z-index: 1;
+}
+
+/* Logo */
+.sidebar-logo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sidebar-logo-icon {
+  width: 32px; height: 32px;
+  background: var(--brand-primary);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 0 16px var(--brand-glow);
+  flex-shrink: 0;
+}
+
+.sidebar-logo-text {
+  font-family: var(--font-display);
+  font-size: 16px; font-weight: 800;
+}
+
+/* User card */
+.sidebar-user {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.user-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #4D8EFF, #22D3EE);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  flex-shrink: 0;
+  border: 2px solid var(--xp-gold);
+  box-shadow: 0 0 12px var(--xp-gold-glow);
+}
+
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-level-row { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+
+.level-badge {
+  font-size: 11px; font-weight: 700;
+  color: var(--xp-gold);
+  background: var(--xp-gold-dim);
+  border: 1px solid rgba(245,197,66,0.2);
+  border-radius: var(--radius-pill);
+  padding: 1px 7px;
+}
+
+.xp-mini { font-size: 11px; color: var(--text-muted); }
+
+/* XP bar */
+.sidebar-xp-bar {
+  padding: 8px 16px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.xp-bar-labels {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--text-muted);
+  margin-bottom: 5px;
+}
+
+.xp-bar-track {
+  height: 4px; background: var(--bg-elevated);
+  border-radius: var(--radius-pill); overflow: hidden;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-primary), var(--level-teal));
+  border-radius: var(--radius-pill);
+  transition: width 0.8s cubic-bezier(0.34,1.2,0.64,1);
+}
+
+/* Quick actions — WITH LABELS */
+.sidebar-quick {
+  display: flex; gap: 4px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.quick-btn {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 4px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.quick-btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.quick-btn svg { width: 16px; height: 16px; }
+
+.quick-btn .notif-dot {
+  position: absolute; top: 6px; right: calc(50% - 14px);
+  width: 6px; height: 6px;
+  background: var(--brand-primary);
+  border-radius: 50%;
+  border: 1.5px solid var(--bg-surface);
+}
+
+/* Nav */
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 10px 10px; }
+
+.nav-section-label {
+  font-size: 10px; font-weight: 700;
+  color: var(--text-muted); letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 10px 8px 6px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  text-align: left;
+}
+
+.nav-item:hover { background: var(--bg-elevated); color: var(--text-primary); }
+
+.nav-item.active {
+  background: rgba(77,142,255,0.15);
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+.nav-badge {
+  margin-left: auto;
+  font-size: 11px; font-weight: 700;
+  background: var(--brand-primary);
+  color: #fff;
+  border-radius: var(--radius-pill);
+  padding: 1px 7px;
+}
+
+/* Course context in nav */
+.nav-context {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  margin: 6px 0;
+  overflow: hidden;
+}
+
+.nav-context-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+}
+
+.nav-context-header svg { width: 14px; height: 14px; color: var(--brand-primary); }
+
+.nav-sub-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px 7px 34px;
+  font-size: 12px; color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.nav-sub-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+.nav-sub-item.active { color: var(--brand-primary); }
+
+/* Sidebar footer */
+.sidebar-footer {
+  padding: 12px 10px;
+  border-top: 1px solid var(--border-subtle);
+  position: relative; z-index: 2;
+}
+
+.btn-logout {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 9px 10px;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-logout:hover { background: rgba(248,113,113,0.08); color: var(--status-danger); }
+.btn-logout svg { width: 16px; height: 16px; }
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.main-content {
+  flex: 1;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Page header */
+.page-header {
+  padding: 28px 32px 0;
+  display: flex; align-items: flex-start; justify-content: space-between;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 24px; font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.page-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+/* ============================================================
+   VIEW: INÍCIO (DASHBOARD)
+   ============================================================ */
+.view { display: none; padding-bottom: 40px; }
+.view.active { display: block; }
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  padding: 24px 32px;
+}
+
+/* Welcome hero */
+.welcome-hero {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: 28px 32px;
+  position: relative; overflow: hidden;
+  margin: 24px 32px 0;
+}
+
+.welcome-hero::before {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(77,142,255,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.welcome-title {
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 700;
+}
+
+.welcome-title em {
+  font-style: normal;
+  color: var(--xp-gold);
+}
+
+.welcome-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; margin-bottom: 20px; }
+
+.welcome-stats {
+  display: flex; gap: 24px;
+}
+
+.w-stat {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 16px; flex: 1;
+}
+
+.w-stat-icon {
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+
+.w-stat-val { font-family: var(--font-display); font-size: 18px; font-weight: 800; }
+.w-stat-lbl { font-size: 11px; color: var(--text-muted); }
+
+/* Cards */
+.section-label {
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.6px;
+  margin-bottom: 14px;
+}
+
+/* Course card (dashboard) */
+.course-card-row {
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.course-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; gap: 16px; align-items: center;
+}
+
+.course-card:hover {
+  border-color: var(--border-medium);
+  background: var(--bg-hover);
+  transform: translateX(3px);
+  box-shadow: var(--shadow-card);
+}
+
+.course-card-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+
+.course-card-body { flex: 1; min-width: 0; }
+.course-card-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.course-card-meta { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+
+.tag {
+  display: inline-flex; align-items: center;
+  font-size: 11px; font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.tag-active { background: rgba(77,142,255,0.15); color: var(--brand-primary); }
+.tag-done   { background: rgba(52,211,153,0.12); color: var(--status-done); }
+.tag-warn   { background: rgba(251,191,36,0.12); color: var(--status-warn); }
+
+.course-card-progress { min-width: 80px; text-align: right; }
+.course-pct { font-family: var(--font-display); font-size: 15px; font-weight: 800; color: var(--brand-primary); }
+.course-pct-lbl { font-size: 11px; color: var(--text-muted); }
+
+/* Aside widgets */
+.aside-col { display: flex; flex-direction: column; gap: 16px; }
+
+.widget {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.widget-title {
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.widget-title svg { width: 14px; height: 14px; color: var(--xp-gold); }
+
+/* XP Progress widget */
+.xp-stages {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.xp-stage {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  flex: 1;
+}
+
+.stage-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 2px solid var(--border-medium);
+  transition: all 0.3s;
+}
+
+.stage-dot.done { background: var(--progress-green); border-color: var(--progress-green); box-shadow: 0 0 8px rgba(52,211,153,0.4); }
+.stage-dot.active { background: var(--brand-primary); border-color: var(--brand-primary); box-shadow: 0 0 8px var(--brand-glow); }
+
+.stage-label { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+.stage-label.active { color: var(--brand-primary); font-weight: 600; }
+
+.stage-connector { flex: 1; height: 2px; background: var(--border-subtle); margin: 0 2px; margin-bottom: 20px; }
+.stage-connector.done { background: var(--progress-green); }
+
+.xp-detail { font-size: 12px; color: var(--text-secondary); text-align: center; }
+.xp-detail strong { color: var(--xp-gold); }
+
+/* Activity */
+.activity-list { display: flex; flex-direction: column; gap: 10px; }
+
+.activity-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 12px; color: var(--text-secondary);
+}
+
+.activity-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--brand-primary);
+  flex-shrink: 0; margin-top: 5px;
+}
+
+.activity-item span { color: var(--text-muted); font-size: 11px; margin-left: auto; white-space: nowrap; }
+
+/* ============================================================
+   VIEW: MEUS CURSOS
+   ============================================================ */
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+  padding: 24px 32px;
+}
+
+.full-course-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.full-course-card:hover {
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+}
+
+.fcc-header {
+  padding: 20px;
+  background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+  position: relative; overflow: hidden;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.fcc-header::after {
+  content: attr(data-emoji);
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 40px; opacity: 0.15;
+}
+
+.fcc-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.fcc-meta { font-size: 12px; color: var(--text-muted); }
+
+.fcc-body { padding: 16px 20px; }
+
+.fcc-stages {
+  display: flex; gap: 6px; margin-bottom: 14px;
+}
+
+.fcc-stage {
+  flex: 1;
+  text-align: center;
+  font-size: 10px; font-weight: 600;
+  padding: 5px 4px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.15s;
+}
+
+.fcc-stage.done { background: var(--progress-dim); color: var(--progress-green); border-color: rgba(52,211,153,0.2); }
+.fcc-stage.active { background: rgba(77,142,255,0.15); color: var(--brand-primary); border-color: rgba(77,142,255,0.3); }
+
+.fcc-xp-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 12px;
+}
+
+.fcc-xp-val { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--xp-gold); }
+.fcc-xp-sub { font-size: 11px; color: var(--text-muted); }
+
+.progress-bar {
+  height: 5px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-primary), var(--level-teal));
+  border-radius: var(--radius-pill);
+}
+
+/* ============================================================
+   VIEW: MISSÃO (Material cards — CLEAN HIERARCHY)
+   ============================================================ */
+.mission-view { padding: 0 32px 40px; }
+
+.mission-hero {
+  display: flex; align-items: flex-start; gap: 20px;
+  padding: 24px 0 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 24px;
+}
+
+.mission-icon {
+  width: 52px; height: 52px;
+  background: rgba(77,142,255,0.15);
+  border: 1.5px solid rgba(77,142,255,0.3);
+  border-radius: var(--radius-lg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; flex-shrink: 0;
+}
+
+.mission-info { flex: 1; }
+.mission-name { font-family: var(--font-display); font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+.mission-breadcrumb { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+
+.stage-pills { display: flex; gap: 6px; }
+
+.stage-pill {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border-medium);
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.stage-pill.done { border-color: rgba(52,211,153,0.3); color: var(--status-done); background: rgba(52,211,153,0.06); }
+.stage-pill.active { border-color: var(--brand-primary); color: var(--brand-primary); background: rgba(77,142,255,0.08); }
+
+.stage-pill-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+}
+
+.mission-xp-summary { text-align: right; }
+.mission-xp-num { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--xp-gold); }
+.mission-xp-total { font-size: 12px; color: var(--text-muted); }
+.mission-pct { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+/* CLEAN MATERIAL CARD */
+.material-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.mat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.mat-card:hover {
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-card);
+}
+
+.mat-card-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.mat-card-icon {
+  width: 38px; height: 38px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+
+.mat-card-title-area { flex: 1; min-width: 0; }
+.mat-card-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mat-card-type { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+.mat-card-status-icon {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.status-done-circle { background: rgba(52,211,153,0.15); color: var(--status-done); }
+.status-active-circle { background: rgba(77,142,255,0.15); color: var(--brand-primary); }
+.status-locked-circle { background: var(--bg-elevated); color: var(--text-muted); }
+
+/* XP Bar in card */
+.mat-xp-area {
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center; gap: 10px;
+}
+
+.mat-xp-label { font-size: 11px; font-weight: 600; color: var(--xp-gold); white-space: nowrap; }
+
+.mat-xp-track {
+  flex: 1; height: 4px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-pill); overflow: hidden;
+}
+
+.mat-xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--xp-gold), #FF9A3C);
+  border-radius: var(--radius-pill);
+}
+
+.mat-xp-pct { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+/* Access info */
+.mat-meta {
+  padding: 8px 18px;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11px; color: var(--text-muted);
+}
+
+.mat-meta svg { width: 12px; height: 12px; }
+
+/* CLEAN ACTIONS — 1 primary + 2 secondary max */
+.mat-actions {
+  padding: 12px 18px;
+  display: flex; gap: 8px; align-items: center;
+}
+
+.mat-btn-primary {
+  flex: 1;
+  padding: 9px 14px;
+  background: var(--brand-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-size: 12px; font-weight: 600;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.mat-btn-primary:hover { background: #6BA3FF; }
+
+.mat-btn-primary.xp-done {
+  background: var(--progress-dim);
+  color: var(--progress-green);
+}
+
+.mat-btn-secondary {
+  padding: 9px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  font-size: 12px; font-weight: 500;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.mat-btn-secondary:hover { border-color: var(--border-medium); color: var(--text-primary); }
+
+.mat-more-btn {
+  padding: 9px 8px;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-md);
+  font-size: 16px; line-height: 1;
+  transition: all 0.15s;
+}
+
+.mat-more-btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
+
+/* Deadline strip */
+.mat-deadline {
+  background: rgba(251,191,36,0.06);
+  border-top: 1px solid rgba(251,191,36,0.15);
+  padding: 7px 18px;
+  font-size: 11px; color: var(--status-warn);
+  display: flex; align-items: center; gap: 6px;
+}
+.mat-deadline svg { width: 12px; height: 12px; }
+
+/* Late warning */
+.mat-late {
+  background: rgba(248,113,113,0.06);
+  border-top: 1px solid rgba(248,113,113,0.15);
+  padding: 7px 18px;
+  font-size: 11px; color: var(--status-danger);
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ============================================================
+   VIEW: QUESTÃO
+   ============================================================ */
+.question-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: var(--bg-root);
+  display: none;
+  flex-direction: column;
+}
+
+.question-overlay.open { display: flex; animation: fadeUp 0.3s ease; }
+
+/* Question topbar */
+.q-topbar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.q-close {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.q-close:hover { background: rgba(248,113,113,0.12); color: var(--status-danger); }
+
+.q-context {
+  flex: 1;
+}
+
+.q-breadcrumb {
+  font-size: 12px; color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.q-breadcrumb strong { color: var(--text-secondary); }
+
+/* Timer ring */
+.q-timer-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+
+.q-timer-ring {
+  position: relative; width: 52px; height: 52px;
+}
+
+.q-timer-ring svg {
+  transform: rotate(-90deg);
+  width: 52px; height: 52px;
+}
+
+.q-timer-ring circle {
+  fill: none; stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.q-timer-track { stroke: var(--bg-elevated); }
+.q-timer-fill {
+  stroke: var(--brand-primary);
+  stroke-dasharray: 138.2; /* 2π×22 */
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.q-timer-text {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 800;
+  color: var(--text-primary);
+}
+
+.q-timer-lbl { font-size: 10px; color: var(--text-muted); }
+
+/* Progress bar top */
+.q-progress-bar {
+  height: 3px;
+  background: var(--bg-elevated);
+  position: relative;
+}
+
+.q-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-primary), var(--level-teal));
+  transition: width 0.5s ease;
+}
+
+/* Question body */
+.q-body {
+  flex: 1; overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+}
+
+.q-content {
+  max-width: 700px; width: 100%;
+  display: flex; gap: 40px; align-items: flex-start;
+}
+
+.q-mascot {
+  width: 120px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+
+.q-mascot-circle {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(77,142,255,0.2), rgba(34,211,238,0.15));
+  border: 2px solid rgba(77,142,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 44px;
+}
+
+.q-mascot-lbl {
+  font-size: 11px; color: var(--text-muted); text-align: center; font-weight: 600;
+}
+
+.q-question-area { flex: 1; }
+
+.q-type-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(245,197,66,0.12);
+  color: var(--xp-gold);
+  border: 1px solid rgba(245,197,66,0.2);
+  margin-bottom: 20px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.q-text {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 700;
+  line-height: 1.4;
+  margin-bottom: 28px;
+  color: var(--text-primary);
+}
+
+/* Cloze input */
+.cloze-answer {
+  display: inline-block;
+  min-width: 160px;
+  padding: 6px 14px;
+  background: transparent;
+  border: none; border-bottom: 2px solid var(--brand-primary);
+  color: var(--brand-primary);
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 700;
+  outline: none;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.cloze-answer:focus { border-color: var(--xp-gold); color: var(--xp-gold); }
+.cloze-answer::placeholder { color: var(--text-muted); font-style: italic; }
+
+/* Essay */
+.essay-textarea {
+  width: 100%;
+  padding: 16px;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px; line-height: 1.7;
+  resize: vertical; min-height: 130px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.essay-textarea:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px var(--brand-glow);
+}
+
+.essay-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 8px;
+  font-size: 11px; color: var(--text-muted);
+}
+
+.essay-meta .word-count { color: var(--text-secondary); }
+
+/* AI evaluating state */
+.ai-eval {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-top: 16px;
+}
+
+.ai-spin {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2.5px solid var(--border-medium);
+  border-top-color: var(--brand-primary);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.ai-eval-text { font-size: 13px; color: var(--text-secondary); }
+.ai-eval-time { font-size: 12px; color: var(--brand-primary); font-weight: 600; margin-left: auto; }
+
+/* Question footer */
+.q-footer {
+  padding: 16px 32px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.q-hints { font-size: 12px; color: var(--text-muted); }
+.q-hints kbd {
+  display: inline-flex; align-items: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: 4px;
+  padding: 2px 7px; font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   POPOVER / MORE ACTIONS
+   ============================================================ */
+.popover {
+  position: absolute; z-index: 50;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  box-shadow: var(--shadow-card);
+  min-width: 180px;
+  display: none;
+  animation: fadeUp 0.15s ease;
+}
+
+.popover.open { display: block; }
+
+.pop-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px; color: var(--text-secondary);
+  cursor: pointer; transition: all 0.12s;
+  width: 100%; text-align: left;
+}
+
+.pop-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.pop-item svg { width: 14px; height: 14px; }
+
+/* ============================================================
+   SUBMISSION MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(8,12,24,0.85);
+  display: none;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xl);
+  width: 100%; max-width: 540px;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  animation: slideUp 0.3s cubic-bezier(0.34,1.2,0.64,1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.modal-header-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-md);
+  background: rgba(77,142,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+
+.modal-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.modal-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.modal-close {
+  margin-left: auto; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted); font-size: 14px;
+  transition: all 0.15s; cursor: pointer;
+}
+.modal-close:hover { background: rgba(248,113,113,0.12); color: var(--status-danger); }
+
+.modal-body { padding: 24px; }
+
+.modal-alert {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.2);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-size: 13px; color: var(--status-warn);
+}
+
+.modal-alert.danger {
+  background: rgba(248,113,113,0.06);
+  border-color: rgba(248,113,113,0.2);
+  color: var(--status-danger);
+}
+
+.modal-alert svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; }
+
+.modal-summary {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; margin-bottom: 20px;
+}
+
+.summary-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.summary-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+.summary-val { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 14px;
+}
+
+.upload-zone:hover {
+  border-color: var(--brand-primary);
+  background: var(--brand-glow);
+}
+
+.upload-icon { font-size: 28px; margin-bottom: 8px; }
+.upload-text { font-size: 13px; color: var(--text-secondary); }
+.upload-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+.upload-file-chosen {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.upload-file-icon { font-size: 20px; }
+.upload-file-name { font-size: 13px; font-weight: 500; flex: 1; }
+.upload-file-size { font-size: 11px; color: var(--text-muted); }
+
+.upload-progress-bar {
+  height: 3px;
+  background: var(--bg-root);
+  border-radius: var(--radius-pill);
+  overflow: hidden; margin-top: 8px;
+}
+
+.upload-progress-fill {
+  height: 100%;
+  background: var(--progress-green);
+  width: 0%; transition: width 0.4s ease;
+}
+
+.pre-analysis-section {
+  background: rgba(77,142,255,0.05);
+  border: 1px solid rgba(77,142,255,0.15);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.pre-analysis-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--brand-primary);
+  margin-bottom: 4px;
+}
+
+.pre-analysis-desc { font-size: 12px; color: var(--text-muted); }
+
+.modal-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-subtle);
+  gap: 10px;
+}
+
+.btn-danger-ghost {
+  padding: 9px 14px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-danger-ghost:hover { border-color: rgba(248,113,113,0.3); color: var(--status-danger); background: rgba(248,113,113,0.04); }
+
+.modal-actions { display: flex; gap: 8px; margin-left: auto; }
+
+/* ============================================================
+   XP GAIN ANIMATION
+   ============================================================ */
+.xp-popup {
+  position: fixed; z-index: 9999;
+  pointer-events: none;
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 800;
+  color: var(--xp-gold);
+  text-shadow: 0 0 20px var(--xp-gold-glow);
+  animation: xpFloat 1.5s ease forwards;
+}
+
+@keyframes xpFloat {
+  0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+  30%  { opacity: 1; transform: translateY(-20px) scale(1.2); }
+  70%  { opacity: 1; transform: translateY(-50px) scale(1); }
+  100% { opacity: 0; transform: translateY(-80px) scale(0.9); }
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+.flex { display: flex; }
+.flex-1 { flex: 1; }
+.items-center { align-items: center; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.mt-16 { margin-top: 16px; }
+.text-right { text-align: right; }
+
+.divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 16px 0;
+}
+
+/* Chip tags in novidades */
+.chip {
+  display: inline-flex;
+  font-size: 10px; font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-medium);
+  color: var(--text-muted);
+}
+
+.chip-blue { background: rgba(77,142,255,0.1); color: var(--brand-primary); border-color: rgba(77,142,255,0.2); }
+.chip-gold { background: var(--xp-gold-dim); color: var(--xp-gold); border-color: rgba(245,197,66,0.2); }
+.chip-green { background: rgba(52,211,153,0.1); color: var(--status-done); border-color: rgba(52,211,153,0.2); }
+.chip-red   { background: rgba(248,113,113,0.1); color: var(--status-danger); border-color: rgba(248,113,113,0.2); }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- TOAST -->
+<!-- ============================================================ -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <span id="toast-msg">Código enviado para seu e-mail!</span>
+</div>
+
+<!-- ============================================================ -->
+<!-- XP GAIN ANIMATION CONTAINER -->
+<!-- ============================================================ -->
+<div id="xp-container"></div>
+
+<!-- ============================================================ -->
+<!-- SCREEN: LOGIN -->
+<!-- ============================================================ -->
+<div class="screen active" id="screen-login">
+  <div class="login-bg"></div>
+  <div class="login-stars"></div>
+
+  <div class="login-layout">
+    <!-- Brand -->
+    <div class="login-brand">
+      <div class="login-logo">
+        <div class="login-logo-icon">⚔️</div>
+        <span class="login-logo-text">ClassHero</span>
+      </div>
+      <h1 class="login-headline">
+        Aprenda, evolua<br>e vire um <em>Herói</em>.
+      </h1>
+      <p class="login-sub">Plataforma educacional com gamificação adaptativa. Cada material concluído é XP na sua jornada.</p>
+      <div class="login-stats">
+        <div>
+          <div class="login-stat-val">4.2k</div>
+          <div class="login-stat-lbl">Alunos ativos</div>
+        </div>
+        <div>
+          <div class="login-stat-val">320</div>
+          <div class="login-stat-lbl">Cursos disponíveis</div>
+        </div>
+        <div>
+          <div class="login-stat-val">98%</div>
+          <div class="login-stat-lbl">Taxa de retenção</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auth Card -->
+    <div class="auth-card">
+      <!-- Step 1: Email -->
+      <div class="auth-step active" id="auth-step-1">
+        <h2 class="auth-title">Acessar conta</h2>
+        <p class="auth-subtitle">Insira seu e-mail institucional. Enviaremos um código de acesso.</p>
+
+        <div class="form-field">
+          <label class="form-label" for="email-input">E-mail institucional</label>
+          <input
+            type="email" id="email-input"
+            class="form-input"
+            placeholder="seu@aluno.utfpr.edu.br"
+            value="">
+          <span class="form-error-msg">E-mail inválido ou não encontrado.</span>
+        </div>
+
+        <button class="btn btn-primary btn-full" onclick="sendCode()" style="margin-top:8px">
+          Enviar código de acesso
+        </button>
+
+        <p style="text-align:center; margin-top:16px; font-size:12px; color:var(--text-muted)">
+          Ao continuar, você concorda com os Termos de Uso da plataforma.
+        </p>
+      </div>
+
+      <!-- Step 2: OTP -->
+      <div class="auth-step" id="auth-step-2">
+        <h2 class="auth-title">Digite o código</h2>
+        <p class="auth-subtitle" id="auth-sub-2">
+          Enviamos um código de 6 dígitos para <strong id="auth-email-display">—</strong>
+        </p>
+
+        <div class="auth-email-row">
+          <span class="auth-email-text" id="auth-email-row-text">—</span>
+          <button class="auth-email-change" onclick="changeEmail()">Trocar e-mail</button>
+        </div>
+
+        <div class="otp-wrapper" id="otp-wrapper">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" oninput="otpNext(this,0)">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" oninput="otpNext(this,1)">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" oninput="otpNext(this,2)">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" oninput="otpNext(this,3)">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" oninput="otpNext(this,4)">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" oninput="otpNext(this,5)">
+        </div>
+
+        <button class="btn btn-primary btn-full" onclick="validateCode()">
+          Validar e entrar
+        </button>
+
+        <div class="resend-area">
+          <button class="resend-btn" id="resend-btn" disabled onclick="resendCode()">Reenviar código</button>
+          <div class="resend-timer" id="resend-timer">Você poderá reenviar em <span id="resend-count">30</span>s</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN: APP -->
+<!-- ============================================================ -->
+<div class="screen" id="screen-app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">⚔️</div>
+      <span class="sidebar-logo-text">ClassHero</span>
+    </div>
+
+    <!-- User -->
+    <div class="sidebar-user">
+      <div class="user-avatar">JE</div>
+      <div class="user-info">
+        <div class="user-name">Jeco Estrateta</div>
+        <div class="user-level-row">
+          <span class="level-badge">Nv 5</span>
+          <span class="xp-mini">2030 XP</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- XP Bar -->
+    <div class="sidebar-xp-bar">
+      <div class="xp-bar-labels">
+        <span>Nível 5</span>
+        <span>Nível 6</span>
+      </div>
+      <div class="xp-bar-track">
+        <div class="xp-bar-fill" id="sidebar-xp-fill" style="width:68%"></div>
+      </div>
+    </div>
+
+    <!-- Quick actions WITH LABELS -->
+    <div class="sidebar-quick">
+      <button class="quick-btn" aria-label="Notificações" onclick="showToast('Nenhuma notificação nova.', '🔔')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span>Avisos</span>
+        <span class="notif-dot"></span>
+      </button>
+      <button class="quick-btn" aria-label="Conquistas" onclick="showToast('12 conquistas desbloqueadas!', '🏆')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+        <span>Troféus</span>
+      </button>
+      <button class="quick-btn" aria-label="Ranking" onclick="showToast('Você está em 3º no ranking!', '📊')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Ranking</span>
+      </button>
+      <button class="quick-btn" aria-label="Configurações" onclick="showToast('Configurações em breve.', '⚙️')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Config</span>
+      </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav" aria-label="Navegação principal">
+      <div class="nav-section-label">Central</div>
+
+      <button class="nav-item active" id="nav-inicio" onclick="showView('inicio')" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Início
+      </button>
+
+      <button class="nav-item" id="nav-cursos" onclick="showView('cursos')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Meus Cursos
+        <span class="nav-badge">3</span>
+      </button>
+
+      <button class="nav-item" id="nav-explorar" onclick="showView('explorar')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Explorar Cursos
+      </button>
+
+      <button class="nav-item" onclick="showToast('Contestações em breve!', '⚔️')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></svg>
+        Contestações
+      </button>
+
+      <button class="nav-item" onclick="showToast('Novidades carregadas!', '📢')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+        Novidades
+        <span class="nav-badge" style="background:var(--status-warn)">4</span>
+      </button>
+
+      <!-- Course context -->
+      <div class="nav-section-label" style="margin-top:8px">Curso Ativo</div>
+      <div class="nav-context">
+        <div class="nav-context-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          Apps Móveis · Flutter
+        </div>
+        <button class="nav-sub-item active" onclick="showView('missao')">
+          📱 Reino dos Apps Móveis
+        </button>
+        <button class="nav-sub-item" onclick="showView('missao')">
+          🔨 Forjando com Widgets
+        </button>
+        <button class="nav-sub-item" onclick="showView('missao')">
+          🌊 Interfaces Dinâmicas
+        </button>
+      </div>
+    </nav>
+
+    <!-- Logout -->
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="goLogin()" aria-label="Sair da plataforma">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sair
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ========== VIEW: INÍCIO ========== -->
+    <div class="view active" id="view-inicio">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Início</h1>
+          <p class="page-subtitle">Boa tarde, Jeancarlo! Continue sua jornada.</p>
+        </div>
+      </div>
+
+      <div class="welcome-hero">
+        <div class="welcome-title">🎯 Você está a <em>433 XP</em> do Nível 6!</div>
+        <div class="welcome-sub">Você tem 2 materiais pendentes e 1 entrega com prazo esta semana.</div>
+        <div class="welcome-stats">
+          <div class="w-stat">
+            <div class="w-stat-icon" style="background:rgba(245,197,66,0.12)">⭐</div>
+            <div>
+              <div class="w-stat-val">2030</div>
+              <div class="w-stat-lbl">XP Total</div>
+            </div>
+          </div>
+          <div class="w-stat">
+            <div class="w-stat-icon" style="background:rgba(52,211,153,0.12)">✅</div>
+            <div>
+              <div class="w-stat-val">14</div>
+              <div class="w-stat-lbl">Materiais concluídos</div>
+            </div>
+          </div>
+          <div class="w-stat">
+            <div class="w-stat-icon" style="background:rgba(77,142,255,0.12)">🔥</div>
+            <div>
+              <div class="w-stat-val">7</div>
+              <div class="w-stat-lbl">Dias seguidos</div>
+            </div>
+          </div>
+          <div class="w-stat">
+            <div class="w-stat-icon" style="background:rgba(34,211,238,0.12)">🏆</div>
+            <div>
+              <div class="w-stat-val">#3</div>
+              <div class="w-stat-lbl">No ranking do curso</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <!-- Cursos em andamento -->
+        <div>
+          <div class="section-label">Cursos em andamento</div>
+          <div class="course-card-row">
+            <div class="course-card" onclick="showView('missao')">
+              <div class="course-card-icon" style="background:rgba(77,142,255,0.12)">📱</div>
+              <div class="course-card-body">
+                <div class="course-card-name">Desenvolvimento de Apps com Flutter</div>
+                <div class="course-card-meta">
+                  <span class="tag tag-active">Em andamento</span>
+                  Missão 4 de 8
+                </div>
+              </div>
+              <div class="course-card-progress">
+                <div class="course-pct">69%</div>
+                <div class="course-pct-lbl">concluído</div>
+              </div>
+            </div>
+
+            <div class="course-card" onclick="showView('cursos')">
+              <div class="course-card-icon" style="background:rgba(52,211,153,0.12)">🌐</div>
+              <div class="course-card-body">
+                <div class="course-card-name">Fundamentos de Redes de Computadores</div>
+                <div class="course-card-meta">
+                  <span class="tag tag-done">Concluído</span>
+                  8 missões finalizadas
+                </div>
+              </div>
+              <div class="course-card-progress">
+                <div class="course-pct" style="color:var(--status-done)">100%</div>
+                <div class="course-pct-lbl">concluído</div>
+              </div>
+            </div>
+
+            <div class="course-card" onclick="showView('cursos')">
+              <div class="course-card-icon" style="background:rgba(251,191,36,0.12)">🗄️</div>
+              <div class="course-card-body">
+                <div class="course-card-name">Banco de Dados Relacionais</div>
+                <div class="course-card-meta">
+                  <span class="tag tag-warn">Pendente</span>
+                  Entrega em 3 dias
+                </div>
+              </div>
+              <div class="course-card-progress">
+                <div class="course-pct" style="color:var(--status-warn)">32%</div>
+                <div class="course-pct-lbl">concluído</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aside widgets -->
+        <div class="aside-col">
+
+          <!-- XP Stage widget -->
+          <div class="widget">
+            <div class="widget-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              Progressão na Missão Atual
+            </div>
+            <div class="xp-stages">
+              <div class="xp-stage">
+                <div class="stage-dot done"></div>
+                <div class="stage-label">Iniciante</div>
+              </div>
+              <div class="stage-connector done"></div>
+              <div class="xp-stage">
+                <div class="stage-dot done"></div>
+                <div class="stage-label">Aprendiz</div>
+              </div>
+              <div class="stage-connector done"></div>
+              <div class="xp-stage">
+                <div class="stage-dot active"></div>
+                <div class="stage-label active">Praticante</div>
+              </div>
+              <div class="stage-connector"></div>
+              <div class="xp-stage">
+                <div class="stage-dot"></div>
+                <div class="stage-label">Veterano</div>
+              </div>
+              <div class="stage-connector"></div>
+              <div class="xp-stage">
+                <div class="stage-dot"></div>
+                <div class="stage-label">Maestro</div>
+              </div>
+            </div>
+            <div class="xp-detail">
+              <strong>1482 / 2140 XP</strong> — Faltam 123 XP para Veterano
+            </div>
+          </div>
+
+          <!-- Recent activity -->
+          <div class="widget">
+            <div class="widget-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brand-primary)"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Atividade Recente
+            </div>
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-dot"></div>
+                <span>Completou <b>Jornada Flutter Nativa</b></span>
+                <span>2h atrás</span>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background:var(--xp-gold)"></div>
+                <span>Ganhou <b>+241 XP</b> no módulo de APIs</span>
+                <span>1d atrás</span>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background:var(--status-done)"></div>
+                <span>Subiu para <b>Nível 5</b></span>
+                <span>3d atrás</span>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background:var(--status-warn)"></div>
+                <span>Entrega <b>Material Design</b> avaliada</span>
+                <span>5d atrás</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== VIEW: MEUS CURSOS ========== -->
+    <div class="view" id="view-cursos">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Meus Cursos</h1>
+          <p class="page-subtitle">3 cursos matriculados · 1 concluído</p>
+        </div>
+      </div>
+
+      <div class="courses-grid">
+        <div class="full-course-card" onclick="showView('missao')">
+          <div class="fcc-header" data-emoji="📱">
+            <div class="fcc-title">Desenvolvimento de Apps com Flutter</div>
+            <div class="fcc-meta">8 missões · 42 materiais · 3200 XP total</div>
+          </div>
+          <div class="fcc-body">
+            <div class="fcc-stages">
+              <div class="fcc-stage done">Iniciante</div>
+              <div class="fcc-stage done">Aprendiz</div>
+              <div class="fcc-stage active">Praticante</div>
+              <div class="fcc-stage">Veterano</div>
+              <div class="fcc-stage">Maestro</div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill" style="width:69%"></div>
+            </div>
+            <div class="fcc-xp-row">
+              <div>
+                <div class="fcc-xp-val">2208 / 3200 XP</div>
+                <div class="fcc-xp-sub">69% concluído · Missão 4 ativa</div>
+              </div>
+              <span class="tag tag-active">Em andamento</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="full-course-card">
+          <div class="fcc-header" data-emoji="🌐">
+            <div class="fcc-title">Fundamentos de Redes de Computadores</div>
+            <div class="fcc-meta">6 missões · 28 materiais · 2400 XP total</div>
+          </div>
+          <div class="fcc-body">
+            <div class="fcc-stages">
+              <div class="fcc-stage done">Iniciante</div>
+              <div class="fcc-stage done">Aprendiz</div>
+              <div class="fcc-stage done">Praticante</div>
+              <div class="fcc-stage done">Veterano</div>
+              <div class="fcc-stage done">Maestro</div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill" style="width:100%; background: linear-gradient(90deg, var(--progress-green), #22D3EE)"></div>
+            </div>
+            <div class="fcc-xp-row">
+              <div>
+                <div class="fcc-xp-val" style="color:var(--status-done)">2400 / 2400 XP</div>
+                <div class="fcc-xp-sub">Concluído em abr/2026</div>
+              </div>
+              <span class="tag tag-done">Concluído ✓</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="full-course-card">
+          <div class="fcc-header" data-emoji="🗄️">
+            <div class="fcc-title">Banco de Dados Relacionais</div>
+            <div class="fcc-meta">5 missões · 22 materiais · 1800 XP total</div>
+          </div>
+          <div class="fcc-body">
+            <div class="fcc-stages">
+              <div class="fcc-stage done">Iniciante</div>
+              <div class="fcc-stage active">Aprendiz</div>
+              <div class="fcc-stage">Praticante</div>
+              <div class="fcc-stage">Veterano</div>
+              <div class="fcc-stage">Maestro</div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill" style="width:32%"></div>
+            </div>
+            <div class="fcc-xp-row">
+              <div>
+                <div class="fcc-xp-val">576 / 1800 XP</div>
+                <div class="fcc-xp-sub">32% · Entrega pendente em 3 dias</div>
+              </div>
+              <span class="tag tag-warn">Atenção ⚠</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== VIEW: MISSÃO (clean cards) ========== -->
+    <div class="view" id="view-missao">
+      <div class="mission-view">
+        <!-- Mission hero -->
+        <div class="mission-hero">
+          <div class="mission-icon">📱</div>
+          <div class="mission-info">
+            <div class="mission-breadcrumb">Apps com Flutter · Missão 3 de 8</div>
+            <div class="mission-name">O Reino dos Apps Móveis</div>
+            <div class="stage-pills">
+              <div class="stage-pill done"><span class="stage-pill-dot"></span>Iniciante</div>
+              <div class="stage-pill done"><span class="stage-pill-dot"></span>Aprendiz</div>
+              <div class="stage-pill active"><span class="stage-pill-dot"></span>Praticante</div>
+              <div class="stage-pill"><span class="stage-pill-dot"></span>Veterano</div>
+              <div class="stage-pill"><span class="stage-pill-dot"></span>Maestro</div>
+            </div>
+          </div>
+          <div class="mission-xp-summary">
+            <div class="mission-xp-num">1482 XP</div>
+            <div class="mission-xp-total">de 2140 total</div>
+            <div class="mission-pct">69% concluído</div>
+          </div>
+        </div>
+
+        <!-- Material grid — CLEAN ACTION HIERARCHY -->
+        <div class="material-grid">
+
+          <!-- Card 1: Concluído -->
+          <div class="mat-card">
+            <div class="mat-card-header">
+              <div class="mat-card-icon" style="background:rgba(52,211,153,0.1)">📖</div>
+              <div class="mat-card-title-area">
+                <div class="mat-card-title">Desbravando o Reino dos Apps Móveis</div>
+                <div class="mat-card-type">NotebookLM · Leitura</div>
+              </div>
+              <div class="mat-card-status-icon status-done-circle">✓</div>
+            </div>
+            <div class="mat-xp-area">
+              <span class="mat-xp-label">207 / 380 XP</span>
+              <div class="mat-xp-track"><div class="mat-xp-fill" style="width:55%"></div></div>
+              <span class="mat-xp-pct">55%</span>
+            </div>
+            <div class="mat-meta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Acessado há 1 mês · Nota 80.0
+            </div>
+            <div class="mat-actions">
+              <button class="mat-btn-primary xp-done" onclick="showXP(this, '+207 XP')">✓ Concluído com XP parcial</button>
+              <button class="mat-btn-secondary" onclick="showToast('Abrindo resumo...','📝')">Resumo</button>
+              <div style="position:relative">
+                <button class="mat-more-btn" onclick="togglePopover('pop1')" aria-label="Mais opções">⋯</button>
+                <div class="popover" id="pop1">
+                  <button class="pop-item" onclick="showToast('Abrindo histórico...','📋');closePopovers()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>
+                    Ver histórico
+                  </button>
+                  <button class="pop-item" onclick="showToast('Abrindo avaliação...','📊');closePopovers()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Ver avaliação (Nota 80)
+                  </button>
+                  <button class="pop-item" onclick="showToast('Abrindo trabalho...','📤');closePopovers()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Ver trabalho entregue
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Em andamento -->
+          <div class="mat-card">
+            <div class="mat-card-header">
+              <div class="mat-card-icon" style="background:rgba(77,142,255,0.1)">📖</div>
+              <div class="mat-card-title-area">
+                <div class="mat-card-title">Jornada Nativa ao Multiplataforma</div>
+                <div class="mat-card-type">NotebookLM · Leitura</div>
+              </div>
+              <div class="mat-card-status-icon status-active-circle">→</div>
+            </div>
+            <div class="mat-xp-area">
+              <span class="mat-xp-label">241 / 280 XP</span>
+              <div class="mat-xp-track"><div class="mat-xp-fill" style="width:86%"></div></div>
+              <span class="mat-xp-pct">86%</span>
+            </div>
+            <div class="mat-meta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Acessado há 1 mês · Nota 88.0
+            </div>
+            <div class="mat-actions">
+              <button class="mat-btn-primary" onclick="showToast('Abrindo material...','📖')">Continuar revisão</button>
+              <button class="mat-btn-secondary" onclick="openSubmitModal()">Registrar aula</button>
+              <div style="position:relative">
+                <button class="mat-more-btn" onclick="togglePopover('pop2')" aria-label="Mais opções">⋯</button>
+                <div class="popover" id="pop2">
+                  <button class="pop-item" onclick="showToast('Abrindo resumo...','📝');closePopovers()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                    Resumo
+                  </button>
+                  <button class="pop-item" onclick="showToast('Abrindo complementar...','📚');closePopovers()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg>
+                    Material complementar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Quiz -->
+          <div class="mat-card">
+            <div class="mat-card-header">
+              <div class="mat-card-icon" style="background:rgba(245,197,66,0.1)">❓</div>
+              <div class="mat-card-title-area">
+                <div class="mat-card-title">Desafio de Competência: Apps Móveis</div>
+                <div class="mat-card-type">Quiz · Avançado</div>
+              </div>
+              <div class="mat-card-status-icon status-done-circle">✓</div>
+            </div>
+            <div class="mat-xp-area">
+              <span class="mat-xp-label">91 / 120 XP</span>
+              <div class="mat-xp-track"><div class="mat-xp-fill" style="width:76%"></div></div>
+              <span class="mat-xp-pct">76%</span>
+            </div>
+            <div class="mat-meta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              1 tentativa · Média: 85/100
+            </div>
+            <div class="mat-actions">
+              <button class="mat-btn-primary" onclick="openQuestion('cloze')">Nova tentativa</button>
+              <button class="mat-btn-secondary" onclick="showToast('Abrindo histórico...','📊')">Histórico</button>
+            </div>
+          </div>
+
+          <!-- Card 4: Entrega — com deadline -->
+          <div class="mat-card">
+            <div class="mat-card-header">
+              <div class="mat-card-icon" style="background:rgba(248,113,113,0.1)">📤</div>
+              <div class="mat-card-title-area">
+                <div class="mat-card-title">Interfaces Dinâmicas no Flutter</div>
+                <div class="mat-card-type">Entrega individual</div>
+              </div>
+              <div class="mat-card-status-icon" style="background:rgba(248,113,113,0.12);color:var(--status-danger);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px">!</div>
+            </div>
+            <div class="mat-xp-area">
+              <span class="mat-xp-label" style="color:var(--text-muted)">0 / 550 XP</span>
+              <div class="mat-xp-track"><div class="mat-xp-fill" style="width:0%"></div></div>
+              <span class="mat-xp-pct">0%</span>
+            </div>
+            <div class="mat-meta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Pendente · Formato: PDF ou ZIP até 50MB
+            </div>
+            <div class="mat-actions">
+              <button class="mat-btn-primary" onclick="openSubmitModal()">Enviar entrega</button>
+              <button class="mat-btn-secondary" onclick="showToast('Abrindo enunciado...','📄')">Ver enunciado</button>
+            </div>
+            <div class="mat-late">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Prazo encerrado. Envio com atraso ainda permitido, sujeito a penalidade.
+            </div>
+          </div>
+
+          <!-- Card 5: Trilha interativa -->
+          <div class="mat-card">
+            <div class="mat-card-header">
+              <div class="mat-card-icon" style="background:rgba(34,211,238,0.1)">🗺️</div>
+              <div class="mat-card-title-area">
+                <div class="mat-card-title">Aventura Mobile: Jornada Interativa</div>
+                <div class="mat-card-type">Trilha · Interativo</div>
+              </div>
+              <div class="mat-card-status-icon status-done-circle">✓</div>
+            </div>
+            <div class="mat-xp-area">
+              <span class="mat-xp-label">131 / 131 XP</span>
+              <div class="mat-xp-track"><div class="mat-xp-fill" style="width:100%"></div></div>
+              <span class="mat-xp-pct">100%</span>
+            </div>
+            <div class="mat-meta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Concluído há 21 dias · Última tentativa: +98 XP
+            </div>
+            <div class="mat-actions">
+              <button class="mat-btn-primary xp-done" onclick="showXP(this, '+131 XP ✓')">✓ XP máximo conquistado</button>
+              <button class="mat-btn-secondary" onclick="showToast('Revisando respostas...','📝')">Revisar</button>
+            </div>
+          </div>
+
+          <!-- Card 6: Resposta dissertativa -->
+          <div class="mat-card">
+            <div class="mat-card-header">
+              <div class="mat-card-icon" style="background:rgba(77,142,255,0.1)">✍️</div>
+              <div class="mat-card-title-area">
+                <div class="mat-card-title">Forjando Interfaces Dinâmicas</div>
+                <div class="mat-card-type">Resposta dissertativa · Avançado</div>
+              </div>
+              <div class="mat-card-status-icon status-active-circle">→</div>
+            </div>
+            <div class="mat-xp-area">
+              <span class="mat-xp-label">+NaN XP</span>
+              <!-- BUG ANOTADO: exibição explícita do bug como referência -->
+              <div class="mat-xp-track"><div class="mat-xp-fill" style="width:0%;background:var(--status-danger)"></div></div>
+              <span class="mat-xp-pct" style="color:var(--status-danger)">Bug</span>
+            </div>
+            <div class="mat-meta" style="color:var(--status-danger)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              ⚠ XP não calculado (NaN) — aguardando correção de backend
+            </div>
+            <div class="mat-actions">
+              <button class="mat-btn-primary" onclick="openQuestion('essay')">Responder dissertativa</button>
+              <button class="mat-btn-secondary" onclick="showToast('Abrindo orientações...','📋')">Orientações</button>
+            </div>
+          </div>
+
+        </div><!-- end material-grid -->
+      </div>
+    </div><!-- end view-missao -->
+
+    <!-- ========== VIEW: EXPLORAR ========== -->
+    <div class="view" id="view-explorar">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Explorar Cursos</h1>
+          <p class="page-subtitle">Descubra novos cursos disponíveis para matrícula.</p>
+        </div>
+      </div>
+      <div style="padding:60px 32px; text-align:center; color:var(--text-muted)">
+        <div style="font-size:48px;margin-bottom:16px">🔭</div>
+        <p style="font-size:15px">Tela de exploração — a ser especificada no SDD.</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ============================================================ -->
+<!-- QUESTION OVERLAY -->
+<!-- ============================================================ -->
+<div class="question-overlay" id="question-overlay">
+  <!-- Progress bar -->
+  <div class="q-progress-bar">
+    <div class="q-progress-fill" id="q-progress" style="width:100%"></div>
+  </div>
+
+  <!-- Topbar -->
+  <div class="q-topbar">
+    <button class="q-close" onclick="closeQuestion()" aria-label="Fechar questão">✕</button>
+    <div class="q-context">
+      <div class="q-breadcrumb">
+        <strong>Apps com Flutter</strong> · Missão 3 · Forjando Interfaces Dinâmicas
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Pergunta 1 de 1</div>
+    </div>
+
+    <!-- Timer visual ring (REPLACES PURE TEXT) -->
+    <div class="q-timer-wrap">
+      <div class="q-timer-ring">
+        <svg viewBox="0 0 52 52">
+          <circle class="q-timer-track" cx="26" cy="26" r="22"/>
+          <circle class="q-timer-fill" id="q-timer-circle" cx="26" cy="26" r="22"/>
+        </svg>
+        <div class="q-timer-text" id="q-timer-text">30s</div>
+      </div>
+      <div class="q-timer-lbl">tempo</div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="q-body">
+    <!-- CLOZE QUESTION -->
+    <div class="q-content" id="q-cloze" style="display:none">
+      <div class="q-mascot">
+        <div class="q-mascot-circle">🦉</div>
+        <div class="q-mascot-lbl">Preencha<br>a lacuna</div>
+      </div>
+      <div class="q-question-area">
+        <div class="q-type-badge">⚡ Preencha a lacuna · Avançado</div>
+        <div class="q-text">
+          Na complexa interação entre lógica de programação e UI, identifique o
+          <input class="cloze-answer" id="cloze-input" placeholder="sua resposta" autocomplete="off">
+          como o mecanismo que não apenas atualiza o estado do widget, mas também lida com exceções e condições compostas.
+        </div>
+        <button class="btn btn-primary" onclick="submitCloze()">
+          Confirmar resposta
+        </button>
+      </div>
+    </div>
+
+    <!-- ESSAY QUESTION -->
+    <div class="q-content" id="q-essay" style="display:none">
+      <div class="q-mascot">
+        <div class="q-mascot-circle" style="background:linear-gradient(135deg,rgba(245,197,66,0.2),rgba(255,154,60,0.15))">🤔</div>
+        <div class="q-mascot-lbl">Resposta<br>dissertativa</div>
+      </div>
+      <div class="q-question-area">
+        <div class="q-type-badge" style="background:rgba(77,142,255,0.12);color:var(--brand-primary);border-color:rgba(77,142,255,0.2)">📝 Dissertativa · Avançado</div>
+        <div class="q-text">
+          No contexto das Missões Dinâmicas, explique por que a missão dinâmica é considerada o 'coração' de uma aplicação interativa, abordando suas implicações práticas e possíveis exceções.
+        </div>
+        <textarea
+          class="essay-textarea"
+          id="essay-input"
+          placeholder="Escreva 2-3 frases (10-60 palavras): responda de forma objetiva."
+          oninput="updateWordCount()"
+          rows="4"
+        ></textarea>
+        <div class="essay-meta">
+          <span class="word-count" id="word-count">0 palavras</span>
+          <button onclick="showToast('Abrindo orientações...','📋')" style="font-size:12px;color:var(--text-muted);background:none;cursor:pointer;border:1px solid var(--border-subtle);padding:3px 10px;border-radius:var(--radius-sm)">ⓘ Orientações</button>
+        </div>
+
+        <!-- AI eval state (hidden initially) -->
+        <div class="ai-eval" id="ai-eval" style="display:none">
+          <div class="ai-spin"></div>
+          <div class="ai-eval-text">Avaliando sua resposta com IA...</div>
+          <div class="ai-eval-time" id="ai-eval-time">1:20</div>
+        </div>
+
+        <div style="margin-top:16px" id="essay-submit-btn">
+          <button class="btn btn-primary" onclick="submitEssay()">
+            Enviar resposta
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="q-footer">
+    <div class="q-hints">
+      Atalhos: <kbd>↑↓</kbd> navegar · <kbd>Enter</kbd> confirmar · <kbd>Esc</kbd> fechar
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span style="font-size:12px;color:var(--text-muted)">Dificuldade: <span style="color:var(--status-danger);font-weight:600">Avançado</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SUBMISSION MODAL -->
+<!-- ============================================================ -->
+<div class="modal-overlay" id="submit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-icon">📤</div>
+      <div>
+        <div class="modal-title">Envio de Entrega</div>
+        <div class="modal-subtitle">Interfaces Dinâmicas no Flutter · Execução individual</div>
+      </div>
+      <button class="modal-close" onclick="closeSubmitModal()" aria-label="Fechar modal">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Late alert -->
+      <div class="modal-alert danger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Prazo encerrado. O professor ainda permite o envio, mas a entrega pode ser penalizada.</span>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="modal-summary">
+        <div class="summary-card">
+          <div class="summary-label">Prazo original</div>
+          <div class="summary-val">04 de abril de 2026</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Formato aceito</div>
+          <div class="summary-val">PDF ou ZIP · até 50MB</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">XP disponível</div>
+          <div class="summary-val" style="color:var(--xp-gold)">Até +550 XP</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Status</div>
+          <div class="summary-val" style="color:var(--status-danger)">Prazo expirado</div>
+        </div>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="upload-zone" onclick="simulateUpload()" aria-label="Área de upload de arquivo">
+        <div class="upload-icon">☁️</div>
+        <div class="upload-text">Clique para selecionar ou arraste o arquivo aqui</div>
+        <div class="upload-hint">PDF ou ZIP · Limite 50MB</div>
+      </div>
+
+      <div class="upload-file-chosen" id="upload-chosen" style="display:none">
+        <span class="upload-file-icon">📄</span>
+        <span class="upload-file-name" id="upload-name">main.zip</span>
+        <span class="upload-file-size">4.4 KB</span>
+        <button onclick="removeFile()" style="color:var(--text-muted);background:none;cursor:pointer;font-size:14px;margin-left:8px">✕</button>
+        <div class="upload-progress-bar" style="position:absolute;bottom:0;left:0;right:0;display:none" id="upload-prog-bar">
+          <div class="upload-progress-fill" id="upload-prog-fill"></div>
+        </div>
+      </div>
+
+      <!-- Pre-analysis -->
+      <div class="pre-analysis-section">
+        <div class="pre-analysis-title">
+          <span>🤖</span> Pré-análise com IA
+        </div>
+        <div class="pre-analysis-desc">Use a pré-análise para revisar legibilidade, aderência ao enunciado e qualidade geral antes de enviar a versão final. Isso não substitui a avaliação do professor.</div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-danger-ghost" onclick="showToast('Envio cancelado.','❌');closeSubmitModal()">
+        Não entregar esta atividade
+      </button>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-sm" onclick="showToast('Rascunho salvo!','💾')">Salvar rascunho</button>
+        <button class="btn btn-ghost btn-sm" onclick="showToast('Pré-analisando com IA...','🤖')">Pré-analisar</button>
+        <button class="btn btn-primary btn-sm" onclick="submitWork()">Enviar entrega</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT -->
+<!-- ============================================================ -->
+<script>
+/* ===== TOAST ===== */
+function showToast(msg, icon = '✓') {
+  const t = document.getElementById('toast');
+  const m = document.getElementById('toast-msg');
+  const i = t.querySelector('.toast-icon');
+  m.textContent = msg;
+  i.textContent = icon;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ===== XP POPUP ===== */
+function showXP(el, label) {
+  const rect = el.getBoundingClientRect();
+  const pop = document.createElement('div');
+  pop.className = 'xp-popup';
+  pop.textContent = label;
+  pop.style.left = (rect.left + rect.width / 2 - 30) + 'px';
+  pop.style.top  = (rect.top - 10) + 'px';
+  document.getElementById('xp-container').appendChild(pop);
+  setTimeout(() => pop.remove(), 1500);
+}
+
+/* ===== AUTH ===== */
+let resendInterval = null;
+
+function sendCode() {
+  const input = document.getElementById('email-input');
+  const val = input.value.trim();
+  if (!val || !val.includes('@')) {
+    input.classList.add('error');
+    return;
+  }
+  input.classList.remove('error');
+  document.getElementById('auth-email-display').textContent = val;
+  document.getElementById('auth-email-row-text').textContent = val;
+
+  document.getElementById('auth-step-1').classList.remove('active');
+  document.getElementById('auth-step-2').classList.add('active');
+
+  showToast('Código enviado para seu e-mail!', '✉️');
+  startResendTimer();
+
+  // Auto-focus first OTP digit
+  setTimeout(() => document.querySelectorAll('.otp-digit')[0].focus(), 100);
+}
+
+function startResendTimer() {
+  let s = 30;
+  const btn   = document.getElementById('resend-btn');
+  const count = document.getElementById('resend-count');
+  const timer = document.getElementById('resend-timer');
+  btn.disabled = true;
+  count.textContent = s;
+  timer.style.display = 'block';
+  clearInterval(resendInterval);
+  resendInterval = setInterval(() => {
+    s--;
+    count.textContent = s;
+    if (s <= 0) {
+      clearInterval(resendInterval);
+      btn.disabled = false;
+      timer.style.display = 'none';
+    }
+  }, 1000);
+}
+
+function resendCode() {
+  showToast('Código reenviado!', '✉️');
+  startResendTimer();
+}
+
+function changeEmail() {
+  document.getElementById('auth-step-2').classList.remove('active');
+  document.getElementById('auth-step-1').classList.add('active');
+  document.querySelectorAll('.otp-digit').forEach(d => d.value = '');
+  clearInterval(resendInterval);
+}
+
+function otpNext(el, idx) {
+  const digits = document.querySelectorAll('.otp-digit');
+  el.value = el.value.replace(/[^0-9]/g, '');
+  if (el.value && idx < 5) digits[idx + 1].focus();
+  // Check if all filled → auto validate
+  const all = [...digits].every(d => d.value.length === 1);
+  if (all) setTimeout(validateCode, 300);
+}
+
+function validateCode() {
+  showToast('Acesso autorizado! Bem-vindo, Jeancarlo!', '🎉');
+  setTimeout(() => {
+    document.getElementById('screen-login').classList.remove('active');
+    document.getElementById('screen-app').classList.add('active');
+  }, 600);
+}
+
+function goLogin() {
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+  document.getElementById('auth-step-2').classList.remove('active');
+  document.getElementById('auth-step-1').classList.add('active');
+  document.querySelectorAll('.otp-digit').forEach(d => d.value = '');
+  document.getElementById('email-input').value = '';
+}
+
+/* ===== VIEWS ===== */
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const target = document.getElementById('view-' + name);
+  if (target) target.classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navMap = { inicio: 'nav-inicio', cursos: 'nav-cursos', explorar: 'nav-explorar', missao: 'nav-cursos' };
+  const navEl = document.getElementById(navMap[name]);
+  if (navEl) navEl.classList.add('active');
+}
+
+/* ===== POPOVERS ===== */
+function togglePopover(id) {
+  closePopovers();
+  const pop = document.getElementById(id);
+  if (pop) pop.classList.toggle('open');
+}
+
+function closePopovers() {
+  document.querySelectorAll('.popover').forEach(p => p.classList.remove('open'));
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.mat-more-btn') && !e.target.closest('.popover')) closePopovers();
+});
+
+/* ===== QUESTION OVERLAY ===== */
+let qTimerInterval = null;
+let qTimerSeconds = 30;
+
+function openQuestion(type) {
+  const overlay = document.getElementById('question-overlay');
+  overlay.classList.add('open');
+
+  document.getElementById('q-cloze').style.display = 'none';
+  document.getElementById('q-essay').style.display = 'none';
+  document.getElementById('ai-eval').style.display = 'none';
+  document.getElementById('essay-submit-btn').style.display = 'block';
+
+  if (type === 'cloze') {
+    document.getElementById('q-cloze').style.display = 'flex';
+    document.getElementById('cloze-input').value = '';
+    startQTimer(30);
+  } else {
+    document.getElementById('q-essay').style.display = 'flex';
+    document.getElementById('essay-input').value = '';
+    document.getElementById('word-count').textContent = '0 palavras';
+    startQTimer(420);
+  }
+}
+
+function closeQuestion() {
+  document.getElementById('question-overlay').classList.remove('open');
+  clearInterval(qTimerInterval);
+}
+
+function startQTimer(secs) {
+  clearInterval(qTimerInterval);
+  qTimerSeconds = secs;
+  const totalDash = 138.2;
+  const circle = document.getElementById('q-timer-circle');
+  const text   = document.getElementById('q-timer-text');
+  const prog   = document.getElementById('q-progress');
+
+  function updateTimer() {
+    const pct = qTimerSeconds / secs;
+    circle.style.strokeDashoffset = totalDash * (1 - pct);
+    circle.style.stroke = pct > 0.4 ? 'var(--brand-primary)' : pct > 0.15 ? 'var(--status-warn)' : 'var(--status-danger)';
+    prog.style.width = (pct * 100) + '%';
+    prog.style.background = pct > 0.4
+      ? 'linear-gradient(90deg,var(--brand-primary),var(--level-teal))'
+      : pct > 0.15 ? 'var(--status-warn)' : 'var(--status-danger)';
+
+    if (secs >= 60) {
+      const m = Math.floor(qTimerSeconds / 60);
+      const s = qTimerSeconds % 60;
+      text.textContent = m + ':' + String(s).padStart(2, '0');
+    } else {
+      text.textContent = qTimerSeconds + 's';
+    }
+    if (qTimerSeconds <= 0) { clearInterval(qTimerInterval); }
+    qTimerSeconds--;
+  }
+
+  updateTimer();
+  qTimerInterval = setInterval(updateTimer, 1000);
+}
+
+function submitCloze() {
+  clearInterval(qTimerInterval);
+  showToast('Resposta enviada! Avaliando...', '✅');
+  showXP(document.getElementById('q-timer-text'), '+91 XP');
+  setTimeout(closeQuestion, 800);
+}
+
+function updateWordCount() {
+  const words = document.getElementById('essay-input').value
+    .trim().split(/\s+/).filter(w => w.length > 0).length;
+  document.getElementById('word-count').textContent = words + ' palavras';
+}
+
+function submitEssay() {
+  const val = document.getElementById('essay-input').value.trim();
+  if (!val || val.split(' ').length < 5) {
+    showToast('Escreva pelo menos 5 palavras.', '⚠️');
+    return;
+  }
+  clearInterval(qTimerInterval);
+  document.getElementById('essay-submit-btn').style.display = 'none';
+  document.getElementById('ai-eval').style.display = 'flex';
+
+  let evalTime = 80;
+  const evalEl = document.getElementById('ai-eval-time');
+  const evalInterval = setInterval(() => {
+    evalTime--;
+    const m = Math.floor(evalTime / 60);
+    const s = evalTime % 60;
+    evalEl.textContent = m + ':' + String(s).padStart(2, '0');
+    if (evalTime <= 0) {
+      clearInterval(evalInterval);
+      showToast('Avaliação concluída! +112 XP', '🤖');
+      showXP(evalEl, '+112 XP');
+      setTimeout(closeQuestion, 1000);
+    }
+  }, 60);
+}
+
+/* ===== SUBMIT MODAL ===== */
+function openSubmitModal() { document.getElementById('submit-modal').classList.add('open'); }
+function closeSubmitModal() { document.getElementById('submit-modal').classList.remove('open'); }
+
+let uploadDone = false;
+
+function simulateUpload() {
+  if (uploadDone) return;
+  uploadDone = true;
+  document.getElementById('upload-zone').style.display = 'none';
+  const chosen = document.getElementById('upload-chosen');
+  chosen.style.display = 'flex';
+  chosen.style.position = 'relative';
+}
+
+function removeFile() {
+  uploadDone = false;
+  document.getElementById('upload-zone').style.display = 'block';
+  document.getElementById('upload-chosen').style.display = 'none';
+}
+
+function submitWork() {
+  if (!uploadDone) { showToast('Selecione um arquivo primeiro.','⚠️'); return; }
+  showToast('Entrega enviada com sucesso!', '🚀');
+  showXP(document.querySelector('.modal-footer .btn-primary'), '+341 XP');
+  closeSubmitModal();
+}
+
+/* ===== KEYBOARD ===== */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('question-overlay').classList.contains('open')) closeQuestion();
+    if (document.getElementById('submit-modal').classList.contains('open')) closeSubmitModal();
+    closePopovers();
+  }
+  if (e.key === 'Enter' && document.querySelector('#q-cloze[style*="flex"]')) {
+    submitCloze();
+  }
+});
+
+// Start on login screen
+document.getElementById('screen-login').classList.add('active');
+</script>
+</body>
+</html>
